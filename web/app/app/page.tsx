@@ -7,7 +7,7 @@ import Header from "@/components/layout/Header";
 import TripsSidebar from "@/components/layout/TripsSidebar";
 import TripDetail from "@/components/layout/TripDetail";
 import MapPanel from "@/components/layout/MapPanel";
-import { getTrips, createTrip, updateTrip, deleteTrip } from "@/lib/firestore";
+import { getTrips, createTrip, updateTrip, deleteTrip, insertTrip } from "@/lib/db";
 import type { Trip, Stop } from "@/lib/types";
 
 export default function AppPage() {
@@ -28,7 +28,7 @@ export default function AppPage() {
   useEffect(() => {
     if (!user) return;
     setTripsLoading(true);
-    getTrips(user.uid)
+    getTrips(user.id)
       .then((data) => {
         setTrips(data);
         if (data.length > 0) setSelectedTripId(data[0].id);
@@ -38,15 +38,13 @@ export default function AppPage() {
 
   const selectedTrip = trips.find((t) => t.id === selectedTripId) ?? null;
 
-  // All stops for the currently selected day's map view
-  // We show all stops across the trip for the map, highlighted by day
   const mapStops: Stop[] = selectedTrip
     ? selectedTrip.days.flatMap((d) => d.stops)
     : [];
 
   const handleCreateTrip = useCallback(async () => {
     if (!user) return;
-    const trip = await createTrip(user.uid);
+    const trip = await createTrip(user.id);
     setTrips((prev) => [trip, ...prev]);
     setSelectedTripId(trip.id);
   }, [user]);
@@ -63,14 +61,9 @@ export default function AppPage() {
 
   const handleImportTrip = useCallback(async (trip: Trip) => {
     if (!user) return;
-    // Save to Firestore
-    const { setDoc, doc } = await import("firebase/firestore");
-    const { db } = await import("@/lib/firebase");
-    await setDoc(doc(db, "trips", trip.id), {
-      ...trip,
-      userId: user.uid,
-    });
-    setTrips((prev) => [trip, ...prev]);
+    const tripWithUser = { ...trip, userId: user.id };
+    await insertTrip(tripWithUser);
+    setTrips((prev) => [tripWithUser, ...prev]);
     setSelectedTripId(trip.id);
   }, [user]);
 
@@ -101,7 +94,7 @@ export default function AppPage() {
         <TripsSidebar
           trips={trips}
           selectedTripId={selectedTripId}
-          userId={user.uid}
+          userId={user.id}
           onSelectTrip={(id) => {
             setSelectedTripId(id);
             setSelectedStopId(null);

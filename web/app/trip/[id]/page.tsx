@@ -1,9 +1,8 @@
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
-import { getDoc, doc } from "firebase/firestore";
 import Link from "next/link";
-import { db } from "@/lib/firebase";
+import { createClient } from "@supabase/supabase-js";
 import type { Trip, Stop } from "@/lib/types";
 import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/types";
 import type { Metadata } from "next";
@@ -13,18 +12,29 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+function getServerSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return { title: "TripWit — Trip" };
   }
   const { id } = await params;
   try {
-    const snap = await getDoc(doc(db, "trips", id));
-    if (!snap.exists()) return { title: "Trip not found" };
-    const trip = snap.data() as Trip;
+    const { data } = await getServerSupabase()
+      .from("trips")
+      .select("name, destination")
+      .eq("id", id)
+      .eq("is_public", true)
+      .single();
+    if (!data) return { title: "Trip not found" };
     return {
-      title: `${trip.name} — TripWit`,
-      description: `Explore ${trip.name}${trip.destination ? ` in ${trip.destination}` : ""} on TripWit.`,
+      title: `${data.name} — TripWit`,
+      description: `Explore ${data.name}${data.destination ? ` in ${data.destination}` : ""} on TripWit.`,
     };
   } catch {
     return { title: "TripWit — Trip" };
@@ -33,11 +43,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PublicTripPage({ params }: Props) {
   const { id } = await params;
-  const snap = await getDoc(doc(db, "trips", id));
+  const { data } = await getServerSupabase()
+    .from("trips")
+    .select("*")
+    .eq("id", id)
+    .eq("is_public", true)
+    .single();
 
-  if (!snap.exists()) notFound();
-  const trip = snap.data() as Trip;
-  if (!trip.isPublic) notFound();
+  if (!data) notFound();
+
+  // Map row to Trip type
+  const trip: Trip = {
+    id: data.id,
+    userId: data.user_id,
+    isPublic: data.is_public,
+    name: data.name,
+    destination: data.destination,
+    statusRaw: data.status_raw,
+    notes: data.notes,
+    hasCustomDates: data.has_custom_dates,
+    budgetAmount: data.budget_amount,
+    budgetCurrencyCode: data.budget_currency_code,
+    startDate: data.start_date,
+    endDate: data.end_date,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+    days: data.days ?? [],
+    bookings: data.bookings ?? [],
+    lists: data.lists ?? [],
+    expenses: data.expenses ?? [],
+  };
 
   const sortedDays = [...trip.days].sort((a, b) => a.dayNumber - b.dayNumber);
 
@@ -46,10 +81,7 @@ export default async function PublicTripPage({ params }: Props) {
       {/* Header */}
       <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
         <Link href="/" className="text-lg font-bold text-slate-800">✈ TripWit</Link>
-        <Link
-          href="/app"
-          className="text-sm text-blue-600 hover:underline"
-        >
+        <Link href="/app" className="text-sm text-blue-600 hover:underline">
           Plan your own trip →
         </Link>
       </header>

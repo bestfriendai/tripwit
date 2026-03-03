@@ -35,17 +35,17 @@ export default function Header({ showAds = false }: HeaderProps) {
       {/* Auth */}
       {user ? (
         <div className="flex items-center gap-3 shrink-0">
-          {user.photoURL && (
+          {user.user_metadata?.avatar_url && (
             <Image
-              src={user.photoURL}
-              alt={user.displayName ?? ""}
+              src={user.user_metadata.avatar_url as string}
+              alt={user.user_metadata?.full_name ?? ""}
               width={32}
               height={32}
               className="rounded-full"
             />
           )}
           <span className="text-sm text-slate-600 hidden md:block">
-            {user.displayName}
+            {user.user_metadata?.full_name ?? user.email}
           </span>
           <button
             onClick={signOut}
