@@ -5,5 +5,8 @@ import SwiftUI
 struct TripWitWidgetBundle: WidgetBundle {
     var body: some Widget {
         TripWitWidget()
+        if #available(iOSApplicationExtension 16.2, *) {
+            TripWitLiveActivity()
+        }
     }
 }
