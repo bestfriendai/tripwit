@@ -11,6 +11,7 @@ struct TripWitApp: App {
     @State private var locationManager = LocationManager()
     @State private var pendingImportURL: URL?
     @State private var pendingQuickAction: QuickActionService.ShortcutType?
+    @State private var pendingDeepLink: DeepLinkRouter.Route?
 
     init() {
         QuickActionService.registerShortcuts()
@@ -20,7 +21,8 @@ struct TripWitApp: App {
         WindowGroup {
             ContentView(
                 pendingImportURL: $pendingImportURL,
-                pendingQuickAction: $pendingQuickAction
+                pendingQuickAction: $pendingQuickAction,
+                pendingDeepLink: $pendingDeepLink
             )
             .environment(locationManager)
             .environment(\.managedObjectContext, persistence.viewContext)
@@ -30,12 +32,14 @@ struct TripWitApp: App {
         }
     }
 
-    /// Route incoming URLs — only .tripwit file imports
+    /// Route incoming URLs — .tripwit file imports and tripwit:// deep links
     private func handleIncomingURL(_ url: URL) {
         appLog.info("[URL] Received URL: \(url.absoluteString)")
 
         if url.pathExtension == "tripwit" {
             pendingImportURL = url
+        } else if let route = DeepLinkRouter.route(from: url) {
+            pendingDeepLink = route
         } else {
             appLog.warning("[URL] Unhandled URL: \(url.absoluteString)")
         }

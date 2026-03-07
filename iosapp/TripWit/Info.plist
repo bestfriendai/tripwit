@@ -30,6 +30,17 @@
 		<string>com.kevinbuckley.travelplanner.viewTrip</string>
 		<string>com.kevinbuckley.travelplanner.viewStop</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.kevinbuckley.travelplanner</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tripwit</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 	<key>CFBundleDocumentTypes</key>

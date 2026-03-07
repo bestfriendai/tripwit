@@ -9,6 +9,7 @@ struct ContentView: View {
 
     @Binding var pendingImportURL: URL?
     @Binding var pendingQuickAction: QuickActionService.ShortcutType?
+    @Binding var pendingDeepLink: DeepLinkRouter.Route?
     @State private var pendingImport: TripTransfer?
     @State private var importError: String?
     @State private var selectedTab = 1
@@ -72,6 +73,9 @@ struct ContentView: View {
         .onChange(of: pendingQuickAction) { _, action in
             handleQuickAction(action)
         }
+        .onChange(of: pendingDeepLink) { _, route in
+            handleDeepLink(route)
+        }
         .sheet(item: $pendingImport) { transfer in
             ImportTripSheet(transfer: transfer) { importedTripID in
                 hasCompletedOnboarding = true
@@ -121,6 +125,40 @@ struct ContentView: View {
             showAddTrip = true
         case .markNextVisited:
             selectedTab = 1  // Trips tab shows the active trip dashboard
+        }
+    }
+
+    /// Handle a deep link route.
+    private func handleDeepLink(_ route: DeepLinkRouter.Route?) {
+        guard let route else { return }
+        pendingDeepLink = nil
+        hasCompletedOnboarding = true
+        selectedTab = 1
+
+        switch route {
+        case .trip(let id):
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                tripsNavPath.append(id)
+            }
+        case .stop(let id):
+            // Navigate to the trip that owns this stop
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                if let trip = allTrips.first(where: { trip in
+                    trip.daysArray.contains(where: { day in
+                        day.stopsArray.contains(where: { $0.id == id })
+                    })
+                }) {
+                    tripsNavPath.append(trip.id)
+                }
+            }
+        case .newTrip:
+            showAddTrip = true
+        case .activeTrip:
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                if let active = allTrips.first(where: { $0.isActive }) ?? allTrips.first {
+                    tripsNavPath.append(active.id)
+                }
+            }
         }
     }
 

@@ -2979,4 +2979,69 @@ func oldStopTransferDecodes() throws {
     FocusFilterStore.clear()
 }
 
+// MARK: - Deep Link Router
+
+@Test func deepLinkParseTripURL() {
+    let id   = UUID()
+    let url  = URL(string: "tripwit://trip/\(id.uuidString)")!
+    let route = DeepLinkRouter.route(from: url)
+    #expect(route == .trip(id: id))
+}
+
+@Test func deepLinkParseStopURL() {
+    let id   = UUID()
+    let url  = URL(string: "tripwit://stop/\(id.uuidString)")!
+    let route = DeepLinkRouter.route(from: url)
+    #expect(route == .stop(id: id))
+}
+
+@Test func deepLinkParseNewTrip() {
+    let url = URL(string: "tripwit://new-trip")!
+    #expect(DeepLinkRouter.route(from: url) == .newTrip)
+}
+
+@Test func deepLinkParseActiveTrip() {
+    let url = URL(string: "tripwit://active")!
+    #expect(DeepLinkRouter.route(from: url) == .activeTrip)
+}
+
+@Test func deepLinkUniversalLinkTrip() {
+    let id  = UUID()
+    let url = URL(string: "https://tripwit.app/trip/\(id.uuidString)")!
+    #expect(DeepLinkRouter.route(from: url) == .trip(id: id))
+}
+
+@Test func deepLinkUnknownSchemeReturnsNil() {
+    let url = URL(string: "https://example.com/trip/abc")!
+    #expect(DeepLinkRouter.route(from: url) == nil)
+}
+
+@Test func deepLinkBadUUIDReturnsNil() {
+    let url = URL(string: "tripwit://trip/not-a-uuid")!
+    #expect(DeepLinkRouter.route(from: url) == nil)
+}
+
+@Test func deepLinkGenerateTripURL() {
+    let id  = UUID()
+    let url = DeepLinkRouter.url(forTripID: id)
+    #expect(url.scheme == "tripwit")
+    #expect(url.host == "trip")
+    #expect(url.pathComponents.contains(id.uuidString))
+}
+
+@Test func deepLinkGenerateStopURL() {
+    let id  = UUID()
+    let url = DeepLinkRouter.url(forStopID: id)
+    #expect(url.scheme == "tripwit")
+    #expect(url.host == "stop")
+    #expect(url.pathComponents.contains(id.uuidString))
+}
+
+@Test func deepLinkRoundtrip() {
+    let tripID = UUID()
+    let generated = DeepLinkRouter.url(forTripID: tripID)
+    let route     = DeepLinkRouter.route(from: generated)
+    #expect(route == .trip(id: tripID))
+}
+
 } // end TripWitTests suite
