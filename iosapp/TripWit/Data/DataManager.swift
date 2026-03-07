@@ -143,6 +143,7 @@ final class DataManager {
         )
         generateDays(for: trip)
         try? context.save()
+        Task { @MainActor in HapticsManager.shared.success() }
         return trip
     }
 
@@ -154,6 +155,7 @@ final class DataManager {
     func deleteTrip(_ trip: TripEntity) {
         context.delete(trip)
         try? context.save()
+        Task { @MainActor in HapticsManager.shared.warning() }
     }
 
     // MARK: - Days
@@ -281,6 +283,7 @@ final class DataManager {
         // Touch the trip so @ObservedObject triggers a refresh in TripDetailView
         day.trip?.updatedAt = Date()
         try? context.save()
+        Task { @MainActor in HapticsManager.shared.medium() }
         return stop
     }
 
@@ -288,6 +291,7 @@ final class DataManager {
         stop.day?.trip?.updatedAt = Date()
         context.delete(stop)
         try? context.save()
+        Task { @MainActor in HapticsManager.shared.warning() }
     }
 
     func toggleVisited(_ stop: StopEntity) {
@@ -295,6 +299,9 @@ final class DataManager {
         stop.visitedAt = stop.isVisited ? Date() : nil
         stop.day?.trip?.updatedAt = Date()
         try? context.save()
+        Task { @MainActor in
+            stop.isVisited ? HapticsManager.shared.success() : HapticsManager.shared.light()
+        }
     }
 
     /// Batch mark multiple stops as visited or not visited.
@@ -306,6 +313,7 @@ final class DataManager {
         }
         stops.first?.day?.trip?.updatedAt = now
         try? context.save()
+        Task { @MainActor in HapticsManager.shared.success() }
     }
 
     /// Mark all stops on a given day as visited or not visited.

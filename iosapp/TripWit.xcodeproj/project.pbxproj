@@ -46,6 +46,7 @@
 		803F8E120A2DD05BF65484C5 /* LocateStopSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA19F821877A0CD6B3C5B38 /* LocateStopSheet.swift */; };
 		8BA441D2E013D4FB282BC47A /* TripListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3500488F3CE7E4DAD0B489C5 /* TripListView.swift */; };
 		9040D5E4E465758E3186916D /* StopTodoEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F934C50FEEEABD297C8E4C0B /* StopTodoEntity.swift */; };
+		90C48036B453F3A995DA0C2B /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E337C2AC0CCEF8ECF25F1CD9 /* HapticsManager.swift */; };
 		9535B9F97CA61FD669EDA2D4 /* TripMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEF3F7D4B07B17C51662D74 /* TripMapView.swift */; };
 		954FEFC882CCA47C5F7B57BB /* ImportTripSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB362856E98CAFC1B5028C5A /* ImportTripSheet.swift */; };
 		964DFC40D406BF25AC71B208 /* WeatherSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36225DDDC4A3B01D5839BD9 /* WeatherSection.swift */; };
@@ -146,6 +147,7 @@
 		D9F5D5E91603815A3AE8C4B5 /* StopPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopPhotosView.swift; sourceTree = "<group>"; };
 		E109704EE9428DECD2E9F8B0 /* CategoryPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryPicker.swift; sourceTree = "<group>"; };
 		E13EC5B226316CB524317DFE /* TripPDFGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPDFGenerator.swift; sourceTree = "<group>"; };
+		E337C2AC0CCEF8ECF25F1CD9 /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
 		E4DAB3A0C2EEAB20209CFC2F /* TripRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripRowView.swift; sourceTree = "<group>"; };
 		E9B7DB2F06E1AE7C1A21FA2F /* EditBookingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditBookingSheet.swift; sourceTree = "<group>"; };
 		EBF0546659AECB2D8FED375B /* WishlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishlistView.swift; sourceTree = "<group>"; };
@@ -289,6 +291,7 @@
 			children = (
 				2F08BA542E3AC1315B797717 /* AITripPlanner.swift */,
 				EE34DE8873A15664A1FE5036 /* CalendarService.swift */,
+				E337C2AC0CCEF8ECF25F1CD9 /* HapticsManager.swift */,
 				9DABD113547EC1C4A0292219 /* LocationManager.swift */,
 				EC799D5C572DB7286BD59B6B /* PhotoLibraryService.swift */,
 				5F3158948D83F1A1ADDC0E4E /* TravelTimeService.swift */,
@@ -452,6 +455,7 @@
 				AE48BEABBC66383CD55539A0 /* EditTripSheet.swift in Sources */,
 				BDD479B1A3BE8C867FE68460 /* ExpenseEntity.swift in Sources */,
 				A7BAB2E9EC464A9325D2BC51 /* FullscreenMapSheet.swift in Sources */,
+				90C48036B453F3A995DA0C2B /* HapticsManager.swift in Sources */,
 				A1A71D9F72A828FC59267E90 /* ImportBookingSheet.swift in Sources */,
 				954FEFC882CCA47C5F7B57BB /* ImportTripSheet.swift in Sources */,
 				803F8E120A2DD05BF65484C5 /* LocateStopSheet.swift in Sources */,
