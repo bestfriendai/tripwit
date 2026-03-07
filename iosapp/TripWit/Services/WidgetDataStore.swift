@@ -12,6 +12,12 @@ struct WidgetTripData: Codable {
     var nextStopName: String?
     var nextStopCategory: String?
     var daysRemaining: Int
+
+    /// Formatted progress string shown in Control Center widget, e.g. "3/7" or "No stops".
+    var progressLabel: String {
+        guard totalStops > 0 else { return "No stops" }
+        return "\(visitedStops)/\(totalStops)"
+    }
 }
 
 /// Manages the shared data store between the app and widget extension.

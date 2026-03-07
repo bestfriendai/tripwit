@@ -8,5 +8,9 @@ struct TripWitWidgetBundle: WidgetBundle {
         if #available(iOSApplicationExtension 16.2, *) {
             TripWitLiveActivity()
         }
+        if #available(iOSApplicationExtension 18.0, *) {
+            TripWitControl()
+            TripWitMarkStopControl()
+        }
     }
 }

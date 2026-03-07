@@ -3157,4 +3157,69 @@ func oldStopTransferDecodes() throws {
     #expect(route == .trip(id: tripID))
 }
 
+// MARK: - Control Center Value (WidgetTripData computed properties)
+
+private func makeWidgetData(
+    tripName: String = "Test Trip",
+    destination: String = "Somewhere",
+    visitedStops: Int = 0,
+    totalStops: Int = 0,
+    nextStopName: String? = nil,
+    daysRemaining: Int = 0
+) -> WidgetTripData {
+    WidgetTripData(
+        tripName: tripName, destination: destination,
+        startDate: Date(), endDate: Date(), statusRaw: "active",
+        visitedStops: visitedStops, totalStops: totalStops,
+        nextStopName: nextStopName, nextStopCategory: nil,
+        daysRemaining: daysRemaining
+    )
+}
+
+@Test func widgetDataProgressLabel() {
+    let d = makeWidgetData(visitedStops: 3, totalStops: 7)
+    #expect(d.progressLabel == "3/7")
+}
+
+@Test func widgetDataProgressLabelNoStops() {
+    let d = makeWidgetData(visitedStops: 0, totalStops: 0)
+    #expect(d.progressLabel == "No stops")
+}
+
+@Test func widgetDataProgressLabelAllVisited() {
+    let d = makeWidgetData(visitedStops: 5, totalStops: 5)
+    #expect(d.visitedStops == d.totalStops)
+    #expect(d.progressLabel == "5/5")
+}
+
+@Test func widgetDataTripName() {
+    let d = makeWidgetData(tripName: "Paris Trip", nextStopName: "Eiffel Tower")
+    #expect(d.tripName == "Paris Trip")
+    #expect(d.nextStopName == "Eiffel Tower")
+}
+
+@Test func widgetDataBuildFromEntity() throws {
+    let ctx = makeTestContext()
+    let trip = TripEntity(context: ctx)
+    trip.id = UUID(); trip.name = "Widget Test Trip"; trip.destination = "Berlin"
+    let today = Calendar.current.startOfDay(for: Date())
+    trip.startDate = today
+    trip.endDate   = Calendar.current.date(byAdding: .day, value: 3, to: today)
+    trip.statusRaw = "active"
+
+    let day = DayEntity(context: ctx)
+    day.id = UUID(); day.dayNumber = 1; day.date = today; day.trip = trip
+
+    let s1 = StopEntity(context: ctx); s1.id = UUID(); s1.name = "Brandenburg Gate"
+    s1.isVisited = true;  s1.day = day
+    let s2 = StopEntity(context: ctx); s2.id = UUID(); s2.name = "Museum Island"
+    s2.isVisited = false; s2.day = day
+
+    let built = WidgetDataStore.buildData(from: trip)
+    #expect(built.tripName    == "Widget Test Trip")
+    #expect(built.totalStops  == 2)
+    #expect(built.visitedStops == 1)
+    #expect(built.progressLabel == "1/2")
+}
+
 } // end TripWitTests suite
