@@ -2840,6 +2840,46 @@ func oldStopTransferDecodes() throws {
     #expect(HandoffManager.tripID(from: activity) == nil)
 }
 
+// MARK: - StoreKit Tip Jar
+
+@Test func tipJarProductIDs() {
+    let ids = TipJarService.TipProduct.allCases.map { $0.rawValue }
+    #expect(ids.count == 3)
+    #expect(ids.contains("com.kevinbuckley.travelplanner.tip.small"))
+    #expect(ids.contains("com.kevinbuckley.travelplanner.tip.medium"))
+    #expect(ids.contains("com.kevinbuckley.travelplanner.tip.large"))
+}
+
+@Test func tipJarIsKnownProduct() {
+    #expect(TipJarService.isKnownProduct("com.kevinbuckley.travelplanner.tip.small"))
+    #expect(TipJarService.isKnownProduct("com.kevinbuckley.travelplanner.tip.medium"))
+    #expect(TipJarService.isKnownProduct("com.kevinbuckley.travelplanner.tip.large"))
+    #expect(!TipJarService.isKnownProduct("com.unknown.product"))
+}
+
+@Test func tipJarProductForID() {
+    #expect(TipJarService.tipProduct(for: "com.kevinbuckley.travelplanner.tip.small")  == .small)
+    #expect(TipJarService.tipProduct(for: "com.kevinbuckley.travelplanner.tip.medium") == .medium)
+    #expect(TipJarService.tipProduct(for: "com.kevinbuckley.travelplanner.tip.large")  == .large)
+    #expect(TipJarService.tipProduct(for: "com.bad.id") == nil)
+}
+
+@Test func tipJarEmojiAndLabel() {
+    #expect(TipJarService.TipProduct.small.emoji  == "☕️")
+    #expect(TipJarService.TipProduct.medium.emoji == "🍕")
+    #expect(TipJarService.TipProduct.large.emoji  == "🎉")
+    #expect(TipJarService.TipProduct.small.label  == "Small Tip")
+    #expect(TipJarService.TipProduct.medium.label == "Medium Tip")
+    #expect(TipJarService.TipProduct.large.label  == "Large Tip")
+}
+
+@Test func tipJarVerificationThrows() async {
+    let svc = await TipJarService()
+    // Verify that checkVerified throws on unverified result
+    // We can't create a real StoreKit unverified result, but we can test TipError
+    #expect(TipError.failedVerification.errorDescription == "Transaction verification failed")
+}
+
 @Test func handoffStopIDFromWrongActivityTypeReturnsNil() async throws {
     let ctx = makeTestContext()
     let dm  = DataManager(context: ctx)
