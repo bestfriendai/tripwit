@@ -16,6 +16,7 @@
 		1234B896C9EE49105792A1E3 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF69C164B3B3F8F2B17B2F8E /* PersistenceController.swift */; };
 		17B2DB0DC0821AD7FDD66970 /* WishlistItemEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25CB227A8806CFB9DD77D99A /* WishlistItemEntity.swift */; };
 		184C1DFD60D43E7B1AEABF12 /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE34DE8873A15664A1FE5036 /* CalendarService.swift */; };
+		195A8712A98C6D51A1C0947D /* TripWitShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805C248A975255478C8D7ECC /* TripWitShortcuts.swift */; };
 		1A885A647A9AE1744955EC6F /* TripPDFGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E13EC5B226316CB524317DFE /* TripPDFGenerator.swift */; };
 		1F8B61B9BAB402261D0E91BA /* AITripPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F08BA542E3AC1315B797717 /* AITripPlanner.swift */; };
 		23895AC86C9186F5600B4019 /* TripListEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B37F4E6179C53E0C2B9C342E /* TripListEntity.swift */; };
@@ -128,6 +129,7 @@
 		67D662B6109483BED9D957A6 /* ActiveTripDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveTripDashboard.swift; sourceTree = "<group>"; };
 		6CB4E202061CCBDE17AC6F81 /* QuickAddStopSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddStopSheet.swift; sourceTree = "<group>"; };
 		7D9C6DC9D0449296850746B3 /* TripEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripEntity.swift; sourceTree = "<group>"; };
+		805C248A975255478C8D7ECC /* TripWitShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripWitShortcuts.swift; sourceTree = "<group>"; };
 		81EB122DB8C8105135ECD726 /* AddBookingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddBookingSheet.swift; sourceTree = "<group>"; };
 		8311EA2CAE8CD21D86330370 /* ShareSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheetView.swift; sourceTree = "<group>"; };
 		8D5B289077B66DEE57491EA1 /* CommentEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentEntity.swift; sourceTree = "<group>"; };
@@ -272,6 +274,14 @@
 			path = Data;
 			sourceTree = "<group>";
 		};
+		86BD377292FBBA871FA59D89 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				805C248A975255478C8D7ECC /* TripWitShortcuts.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
 		CC483ADA4EF4BB81AD4A9255 /* TripWit */ = {
 			isa = PBXGroup;
 			children = (
@@ -282,6 +292,7 @@
 				4EEA216B7AE0F95EFD9834BF /* TripWit.entitlements */,
 				FD87138A48497EB0FC01EFA9 /* TripWitApp.swift */,
 				7964DD24829E7D273198BFCB /* Data */,
+				86BD377292FBBA871FA59D89 /* Intents */,
 				D105289000DC7E017F525F53 /* Services */,
 				5B1FA6A2E9D84BA051715299 /* Views */,
 			);
@@ -498,6 +509,7 @@
 				C5F24DD8570045CF65849330 /* TripTransfer.swift in Sources */,
 				736E96428B5971C934E1DE8A /* TripWit.xcdatamodeld in Sources */,
 				01404F8C70E683BDAF8F032E /* TripWitApp.swift in Sources */,
+				195A8712A98C6D51A1C0947D /* TripWitShortcuts.swift in Sources */,
 				964DFC40D406BF25AC71B208 /* WeatherSection.swift in Sources */,
 				E0CBA36615DA7532886C66EC /* WeatherService.swift in Sources */,
 				BE370AD1A27E0E604448055B /* WelcomeView.swift in Sources */,
