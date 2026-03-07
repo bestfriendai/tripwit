@@ -18,6 +18,12 @@ enum ShareSheet {
         presentActivity(items: [text])
     }
 
+    /// Shares a rendered trip card image via the system share sheet.
+    @MainActor static func shareImage(_ image: UIImage, tripName: String) {
+        let message = "Check out my trip \"\(tripName)\" planned with TripWit!"
+        presentActivity(items: [message, image])
+    }
+
     @MainActor static func shareTripFile(_ fileURL: URL, tripName: String) {
         let message = "Check out my trip \"\(tripName)\"! Open the attached file in TripWit to view the full itinerary."
         let source = TripFileActivitySource(fileURL: fileURL, tripName: tripName)

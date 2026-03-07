@@ -840,10 +840,9 @@ private func makeTripWithDays(
 
     manager.deleteStop(middle)
 
-    // Verify via fetch request (relationship caches can be stale after delete+save)
-    let req = StopEntity.fetchRequest() as! NSFetchRequest<StopEntity>
-    req.predicate = NSPredicate(format: "day == %@", day)
-    let remaining = (try? context.fetch(req)) ?? []
+    // Refresh the day fault so the in-memory relationship cache is re-read from the store
+    context.refresh(day, mergeChanges: false)
+    let remaining = day.stopsArray
     #expect(remaining.count == 2)
     let names = remaining.map(\.wrappedName).sorted()
     #expect(names == ["A", "C"])
@@ -3330,6 +3329,103 @@ private struct MockStepStore: StepCountStoreProtocol {
     let result = svc.stepCount(for: today)
     #expect(result.goal == 10_000)
     #expect(abs(result.percentage - 0.5) < 0.0001)
+}
+
+// MARK: - TripGradientTheme
+
+@Test func themeActiveColorNameIsGreen() {
+    let theme = TripGradientTheme.theme(status: .active)
+    #expect(theme.colorName == "green")
+}
+
+@Test func themeCompletedColorNameIsGray() {
+    let theme = TripGradientTheme.theme(status: .completed)
+    #expect(theme.colorName == "gray")
+}
+
+@Test func themePlanningColorNameIsDeterministic() {
+    let t1 = TripGradientTheme.theme(status: .planning, destination: "Paris")
+    let t2 = TripGradientTheme.theme(status: .planning, destination: "Paris")
+    #expect(t1.colorName == t2.colorName)
+}
+
+@Test func themePlanningEmptyDestinationStable() {
+    // Should not crash and always return the same value
+    let t1 = TripGradientTheme.theme(status: .planning, destination: "")
+    let t2 = TripGradientTheme.theme(status: .planning, destination: "")
+    #expect(t1.colorName == t2.colorName)
+}
+
+@Test func destinationHashIsDeterministic() {
+    #expect(TripGradientTheme.destinationHash("Rome") == TripGradientTheme.destinationHash("Rome"))
+}
+
+@Test func destinationHashEmptyIsZero() {
+    #expect(TripGradientTheme.destinationHash("") == 0)
+}
+
+@Test func destinationHashIsNonNegative() {
+    let destinations = ["Paris", "New York", "Tokyo", "Sydney", "London", "🌏", "Zürich"]
+    for dest in destinations {
+        #expect(TripGradientTheme.destinationHash(dest) >= 0)
+    }
+}
+
+// MARK: - TripCardData
+
+@Test func tripCardDataNoStops() {
+    let ctx = makeTestContext()
+    let trip = TripEntity(context: ctx)
+    trip.id = UUID(); trip.name = "My Trip"; trip.destination = "Paris"
+    trip.hasCustomDates = false; trip.statusRaw = "planning"
+
+    let data = TripCardData(from: trip)
+    #expect(data.name        == "My Trip")
+    #expect(data.destination == "PARIS")       // uppercased
+    #expect(data.stopCount   == 0)
+    #expect(data.stopCountText == "0 stops planned")
+    #expect(data.dateRange   == nil)
+    #expect(data.durationText == nil)
+}
+
+@Test func tripCardDataPluralStops() throws {
+    let ctx  = makeTestContext()
+    let trip = TripEntity(context: ctx)
+    trip.id = UUID(); trip.name = "Tokyo"; trip.destination = "Japan"
+    trip.hasCustomDates = true; trip.statusRaw = "planning"
+    let today = Calendar.current.startOfDay(for: Date())
+    trip.startDate = today
+    trip.endDate   = Calendar.current.date(byAdding: .day, value: 4, to: today)
+
+    let day = DayEntity(context: ctx)
+    day.id = UUID(); day.dayNumber = 1; day.date = today; day.trip = trip
+
+    let s1 = StopEntity(context: ctx); s1.id = UUID(); s1.name = "A"; s1.day = day
+    let s2 = StopEntity(context: ctx); s2.id = UUID(); s2.name = "B"; s2.day = day
+
+    let data = TripCardData(from: trip)
+    #expect(data.stopCount     == 2)
+    #expect(data.stopCountText == "2 stops planned")
+    #expect(data.dateRange     != nil)
+    #expect(data.durationText  == "5 days")
+}
+
+@Test func tripCardDataSingleStopAndDay() throws {
+    let ctx  = makeTestContext()
+    let trip = TripEntity(context: ctx)
+    trip.id = UUID(); trip.name = "Solo Day"; trip.destination = "NYC"
+    trip.hasCustomDates = true; trip.statusRaw = "active"
+    let today = Calendar.current.startOfDay(for: Date())
+    trip.startDate = today
+    trip.endDate   = today   // single-day trip
+
+    let day = DayEntity(context: ctx)
+    day.id = UUID(); day.dayNumber = 1; day.date = today; day.trip = trip
+    let s = StopEntity(context: ctx); s.id = UUID(); s.name = "Central Park"; s.day = day
+
+    let data = TripCardData(from: trip)
+    #expect(data.stopCountText == "1 stop planned")
+    #expect(data.durationText  == "1 day")
 }
 
 } // end TripWitTests suite

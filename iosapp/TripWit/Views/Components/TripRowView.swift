@@ -22,7 +22,16 @@ struct TripRowView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         } else {
-            rowContent
+            HStack(alignment: .top, spacing: 0) {
+                // Gradient accent strip — color encodes trip status at a glance
+                RoundedRectangle(cornerRadius: 2, style: .continuous)
+                    .fill(TripGradientTheme.theme(for: trip).gradient)
+                    .frame(width: 3)
+                    .padding(.vertical, 6)
+
+                rowContent
+                    .padding(.leading, 10)
+            }
         }
     }
 

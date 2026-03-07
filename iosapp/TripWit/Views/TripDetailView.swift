@@ -24,6 +24,7 @@ struct TripDetailView: View {
     @State private var isExportingCalendar = false
     @State private var draggingStopID: String?
     @State private var dropTargetDayID: UUID?
+    @State private var showConfetti = false
 
     private var sortedDays: [DayEntity] {
         trip.daysArray.sorted { $0.dayNumber < $1.dayNumber }
@@ -105,6 +106,22 @@ struct TripDetailView: View {
         .listStyle(.insetGrouped)
         .navigationTitle(trip.wrappedName)
         .navigationBarTitleDisplayMode(.large)
+        .overlay(alignment: .top) {
+            if showConfetti {
+                ConfettiView()
+                    .transition(.opacity)
+                    .zIndex(100)
+            }
+        }
+        .onChange(of: trip.statusRaw) { _, newValue in
+            if newValue == TripStatus.completed.rawValue {
+                withAnimation { showConfetti = true }
+                Task {
+                    try? await Task.sleep(for: .seconds(4))
+                    withAnimation { showConfetti = false }
+                }
+            }
+        }
         .task(id: trip.objectID) {
             if !trip.isPast {
                 await weatherService.fetchWeather(
@@ -196,6 +213,11 @@ struct TripDetailView: View {
                         shareTripText()
                     } label: {
                         Label("Share as Text", systemImage: "text.alignleft")
+                    }
+                    Button {
+                        shareTripImage()
+                    } label: {
+                        Label("Share as Image", systemImage: "photo")
                     }
                     Divider()
                     Button {
@@ -306,19 +328,35 @@ struct TripDetailView: View {
                     StatusBadge(status: trip.displayStatus)
                 }
 
-                HStack(spacing: 16) {
-                    if trip.hasCustomDates {
-                        Label("\(trip.durationInDays) days", systemImage: "calendar")
+                HStack(alignment: .center, spacing: 0) {
+                    // Left: duration + day-plan count
+                    HStack(spacing: 12) {
+                        if trip.hasCustomDates {
+                            Label("\(trip.durationInDays) days", systemImage: "calendar")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Label("\(trip.daysArray.count) day plans", systemImage: "list.bullet")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    Label("\(trip.daysArray.count) day plans", systemImage: "list.bullet")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    let stopCount = trip.daysArray.reduce(0) { $0 + $1.stopsArray.count }
-                    Label("\(stopCount) stops", systemImage: "mappin")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Spacer()
+                    // Right: animated progress ring + visited count
+                    let allStops    = trip.daysArray.flatMap { $0.stopsArray }
+                    let visited     = allStops.filter(\.isVisited).count
+                    let totalStops  = allStops.count
+                    HStack(spacing: 8) {
+                        TripProgressRingView(visited: visited, total: totalStops)
+                            .frame(width: 40, height: 40)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("\(visited) of \(totalStops)")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.primary)
+                            Text("stops visited")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
             .padding(.vertical, 4)
@@ -798,6 +836,12 @@ struct TripDetailView: View {
     private func shareTripPDF() {
         let data = TripPDFGenerator.generatePDF(for: trip)
         ShareSheet.share(pdfData: data, filename: "\(trip.wrappedName) Itinerary.pdf")
+    }
+
+    private func shareTripImage() {
+        let cardData = TripCardData(from: trip)
+        guard let image = TripCardRenderer.render(from: cardData) else { return }
+        ShareSheet.shareImage(image, tripName: trip.wrappedName)
     }
 
     private func shareTripText() {
