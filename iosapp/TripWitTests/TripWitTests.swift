@@ -1,6 +1,7 @@
 import Testing
 import CoreData
 import Foundation
+import UIKit
 import TripCore
 
 @testable import TripWit
@@ -2743,6 +2744,47 @@ func oldStopTransferDecodes() throws {
     #expect(e.wrappedNotes     == "Shinkansen")
     #expect(e.sortOrder        == 4)
     #expect(e.createdAt?.timeIntervalSince1970 == expenseCreatedAt.timeIntervalSince1970)
+}
+
+// MARK: - Quick Action Service
+
+@Test func quickActionBuildItems() {
+    let items = QuickActionService.buildShortcutItems()
+    #expect(items.count == 3)
+
+    let types = items.map { $0.type }
+    #expect(types.contains(QuickActionService.ShortcutType.viewActiveTrip.rawValue))
+    #expect(types.contains(QuickActionService.ShortcutType.addNewTrip.rawValue))
+    #expect(types.contains(QuickActionService.ShortcutType.markNextVisited.rawValue))
+}
+
+@Test func quickActionTitles() {
+    #expect(QuickActionService.title(for: .viewActiveTrip)  == "Active Trip")
+    #expect(QuickActionService.title(for: .addNewTrip)      == "New Trip")
+    #expect(QuickActionService.title(for: .markNextVisited) == "Mark Next Stop")
+}
+
+@Test func quickActionSystemImages() {
+    #expect(QuickActionService.systemImage(for: .viewActiveTrip)  == "airplane")
+    #expect(QuickActionService.systemImage(for: .addNewTrip)      == "plus.circle")
+    #expect(QuickActionService.systemImage(for: .markNextVisited) == "checkmark.circle")
+}
+
+@Test func quickActionTypeRoundtrip() {
+    for expected in [QuickActionService.ShortcutType.viewActiveTrip,
+                     .addNewTrip, .markNextVisited] {
+        let item = UIApplicationShortcutItem(
+            type: expected.rawValue,
+            localizedTitle: "Test"
+        )
+        let resolved = QuickActionService.type(for: item)
+        #expect(resolved == expected)
+    }
+}
+
+@Test func quickActionUnknownTypeReturnsNil() {
+    let item = UIApplicationShortcutItem(type: "com.unknown.action", localizedTitle: "X")
+    #expect(QuickActionService.type(for: item) == nil)
 }
 
 } // end TripWitTests suite

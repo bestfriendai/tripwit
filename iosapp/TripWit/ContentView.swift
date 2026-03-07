@@ -8,10 +8,12 @@ struct ContentView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     @Binding var pendingImportURL: URL?
+    @Binding var pendingQuickAction: QuickActionService.ShortcutType?
     @State private var pendingImport: TripTransfer?
     @State private var importError: String?
     @State private var selectedTab = 1
     @State private var tripsNavPath = NavigationPath()
+    @State private var showAddTrip = false
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \TripEntity.startDate, ascending: false)]) private var allTrips: FetchedResults<TripEntity>
 
     #if DEBUG
@@ -67,6 +69,9 @@ struct ContentView: View {
         .onChange(of: pendingImportURL) { _, _ in
             handleImportURL()
         }
+        .onChange(of: pendingQuickAction) { _, action in
+            handleQuickAction(action)
+        }
         .sheet(item: $pendingImport) { transfer in
             ImportTripSheet(transfer: transfer) { importedTripID in
                 hasCompletedOnboarding = true
@@ -95,6 +100,28 @@ struct ContentView: View {
             importError = error.localizedDescription
         }
         pendingImportURL = nil
+    }
+
+    /// Handle a home screen quick action that was triggered by the user.
+    private func handleQuickAction(_ action: QuickActionService.ShortcutType?) {
+        guard let action else { return }
+        pendingQuickAction = nil
+        hasCompletedOnboarding = true
+
+        switch action {
+        case .viewActiveTrip:
+            selectedTab = 1  // Trips tab
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                if let active = allTrips.first(where: { $0.isActive }) ?? allTrips.first {
+                    tripsNavPath.append(active.id)
+                }
+            }
+        case .addNewTrip:
+            selectedTab = 1
+            showAddTrip = true
+        case .markNextVisited:
+            selectedTab = 1  // Trips tab shows the active trip dashboard
+        }
     }
 
     private var mainTabView: some View {
