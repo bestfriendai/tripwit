@@ -265,7 +265,7 @@ export default function TripsSidebar({
 
       {/* ── User footer ───────────────────────────────── */}
       {user && (
-        <div className="shrink-0 border-t border-white/5 px-3 py-3">
+        <div className="relative z-[1101] shrink-0 border-t border-white/5 px-3 py-3 bg-[#0c111d]">
           <div className="flex items-center gap-2.5 group">
             {user.user_metadata?.avatar_url ? (
               <Image

@@ -27,7 +27,7 @@ export default function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 text-white px-4 py-3 flex items-center gap-4 shadow-2xl">
+    <div className="fixed bottom-0 left-0 right-0 z-[1100] bg-slate-900 text-white px-4 py-3 flex items-center gap-4 shadow-2xl">
       <p className="flex-1 text-xs text-slate-300">
         We use cookies for analytics and advertising to keep TripWit free.{" "}
         <a
