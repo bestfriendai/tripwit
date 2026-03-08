@@ -120,7 +120,7 @@ export default async function PublicTripPage({ params }: Props) {
             <span className="text-white font-semibold text-[14px]">TripWit</span>
           </Link>
           <Link
-            href="/app"
+            href="/"
             className="text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
           >
             Plan your own trip
@@ -420,7 +420,7 @@ export default async function PublicTripPage({ params }: Props) {
             Create beautiful itineraries with TripWit — free, for web and iOS.
           </p>
           <Link
-            href="/app"
+            href="/"
             className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-500 transition-colors shadow-sm"
           >
             Start planning free
