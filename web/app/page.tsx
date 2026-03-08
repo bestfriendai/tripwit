@@ -131,7 +131,7 @@ export default function AppPage() {
     return (
       <div className="h-screen flex items-center justify-center bg-[#0c111d]">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg text-lg">✈</div>
+          <img src="/icon-512.png" alt="TripWit" className="w-10 h-10 rounded-2xl object-cover shadow-lg" />
           <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
@@ -144,9 +144,7 @@ export default function AppPage() {
       <div className="h-screen flex flex-col bg-[#0c111d]">
         <nav className="px-6 h-14 flex items-center border-b border-white/6 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm">
-              <span className="text-white text-sm">✈</span>
-            </div>
+            <img src="/icon-512.png" alt="TripWit" className="w-7 h-7 rounded-xl object-cover shadow-sm" />
             <span className="text-white font-semibold text-[15px]">TripWit</span>
           </div>
         </nav>
@@ -155,9 +153,11 @@ export default function AppPage() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] bg-blue-600/15 rounded-full blur-[100px]" />
           </div>
           <div className="relative text-center max-w-xs">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center mx-auto mb-6 shadow-[0_8px_32px_rgba(59,130,246,0.4)] text-3xl">
-              ✈️
-            </div>
+            <img
+              src="/icon-512.png"
+              alt="TripWit"
+              className="w-16 h-16 rounded-2xl object-cover mx-auto mb-6 shadow-[0_8px_32px_rgba(59,130,246,0.4)]"
+            />
             <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">Welcome to TripWit</h1>
             <p className="text-slate-400 text-sm leading-relaxed mb-8">
               Sign in to start planning your trips. Your itineraries, bookings, and budget — all in one beautiful workspace.

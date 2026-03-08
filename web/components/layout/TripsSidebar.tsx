@@ -100,9 +100,7 @@ export default function TripsSidebar({
     >
       {/* ── Logo header ─────────────────────────────── */}
       <div className="flex items-center gap-2.5 px-4 h-14 border-b border-white/5 shrink-0">
-        <div className="w-7 h-7 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm shrink-0">
-          <span className="text-white text-sm">✈</span>
-        </div>
+        <img src="/icon-512.png" alt="TripWit" className="w-7 h-7 rounded-xl object-cover shadow-sm shrink-0" />
         <span className="text-white font-semibold text-[15px] tracking-tight">TripWit</span>
       </div>
 
