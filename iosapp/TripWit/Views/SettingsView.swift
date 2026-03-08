@@ -100,6 +100,38 @@ struct SettingsView: View {
                 #endif
             }
 
+            // Explore TripWit
+            Section {
+                if let webURL = URL(string: "https://tripwit.app") {
+                    Link(destination: webURL) {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(Color.blue)
+                                    .frame(width: 32, height: 32)
+                                Image(systemName: "globe")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(.white)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("TripWit for Web")
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                Text("Plan from any browser at tripwit.app")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+            } header: {
+                Text("Explore TripWit")
+            } footer: {
+                Text("Your trips are also yours on the web.")
+            }
+
             // About
             Section {
                 if let supportURL = URL(string: "https://kevinbuckley.github.io/tripwit/support.html") {

@@ -163,6 +163,14 @@ export default function AppPage() {
               Continue with Google
             </button>
             <p className="text-xs text-slate-600 mt-4">Free forever · No credit card required</p>
+            <a
+              href="https://apps.apple.com/app/tripwit/id6670162803"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-xs text-slate-600 mt-2 hover:text-slate-400 transition-colors"
+            >
+              Also available on iPhone →
+            </a>
           </div>
         </div>
       </div>

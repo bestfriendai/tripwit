@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Plus, Trash2, Upload, Download, Copy, MapPin, LogOut } from "lucide-react";
+import { Plus, Trash2, Upload, Download, Copy, MapPin, LogOut, Smartphone } from "lucide-react";
 import Image from "next/image";
 import type { Trip } from "@/lib/types";
 import type { User } from "@supabase/supabase-js";
@@ -249,6 +249,19 @@ export default function TripsSidebar({
           );
         })}
       </div>
+
+      {/* ── iPhone app promo ──────────────────────────── */}
+      <a
+        href="https://apps.apple.com/app/tripwit/id6670162803"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2.5 px-4 py-2.5 border-t border-white/5 group shrink-0"
+      >
+        <Smartphone className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400 transition-colors shrink-0" />
+        <span className="text-[11px] font-medium text-slate-600 group-hover:text-slate-400 transition-colors">
+          Get TripWit for iPhone
+        </span>
+      </a>
 
       {/* ── User footer ───────────────────────────────── */}
       {user && (
