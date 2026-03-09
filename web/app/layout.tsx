@@ -14,6 +14,7 @@ const inter = Inter({
 const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://tripwit.app"),
   title: "TripWit — Travel Planner",
   description:
     "Plan trips, track your itinerary, and stay organized — from your desktop.",
