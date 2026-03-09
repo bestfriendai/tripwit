@@ -130,8 +130,13 @@ export default async function PublicTripPage({ params }: Props) {
       </nav>
 
       {/* Hero */}
-      <div className="bg-[#0c111d] pt-14">
-        <div className="max-w-3xl mx-auto px-5 pt-12 pb-10">
+      <div className="bg-[#0c111d] pt-14 relative overflow-hidden">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-[500px] h-[300px] bg-blue-600/10 rounded-full blur-[100px]" />
+          <div className="absolute bottom-0 right-1/4 w-[400px] h-[250px] bg-indigo-600/8 rounded-full blur-[80px]" />
+        </div>
+        <div className="relative max-w-3xl mx-auto px-5 pt-12 pb-10">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-3">
@@ -139,11 +144,11 @@ export default async function PublicTripPage({ params }: Props) {
                   {statusCfg.label}
                 </span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight tracking-tight">
+              <h1 className="text-3xl sm:text-[40px] font-extrabold text-white leading-tight tracking-tight">
                 {trip.name}
               </h1>
               {trip.destination && (
-                <p className="text-slate-400 mt-2 flex items-center gap-1.5">
+                <p className="text-slate-400 mt-2.5 flex items-center gap-1.5 text-[15px]">
                   <span>📍</span>
                   {trip.destination}
                 </p>
@@ -158,41 +163,46 @@ export default async function PublicTripPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Stats strip */}
-          <div className="flex items-center gap-6 mt-8 pt-6 border-t border-white/8">
-            {sortedDays.length > 0 && (
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">{sortedDays.length}</div>
-                <div className="text-xs text-slate-500 mt-0.5">day{sortedDays.length !== 1 ? "s" : ""}</div>
+          {/* Stats strip — glassmorphism cards */}
+          {(sortedDays.length > 0 || totalStops > 0 || sortedBookings.length > 0) && (
+            <div className="mt-8 pt-6 border-t border-white/8">
+              <div className="flex items-stretch gap-3 flex-wrap">
+                {sortedDays.length > 0 && (
+                  <div className="flex flex-col items-center justify-center px-5 py-3 rounded-xl bg-white/5 border border-white/8 backdrop-blur-sm min-w-[72px]">
+                    <div className="text-2xl font-black text-white">{sortedDays.length}</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5 font-medium">day{sortedDays.length !== 1 ? "s" : ""}</div>
+                  </div>
+                )}
+                {totalStops > 0 && (
+                  <div className="flex flex-col items-center justify-center px-5 py-3 rounded-xl bg-white/5 border border-white/8 backdrop-blur-sm min-w-[72px]">
+                    <div className="text-2xl font-black text-white">{totalStops}</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5 font-medium">stop{totalStops !== 1 ? "s" : ""}</div>
+                  </div>
+                )}
+                {sortedBookings.length > 0 && (
+                  <div className="flex flex-col items-center justify-center px-5 py-3 rounded-xl bg-white/5 border border-white/8 backdrop-blur-sm min-w-[72px]">
+                    <div className="text-2xl font-black text-white">{sortedBookings.length}</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5 font-medium">booking{sortedBookings.length !== 1 ? "s" : ""}</div>
+                  </div>
+                )}
+                {trip.statusRaw !== "planning" && totalStops > 0 && (
+                  <div className="flex-1 flex flex-col justify-center px-5 py-3 rounded-xl bg-white/5 border border-white/8 backdrop-blur-sm min-w-[140px]">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] text-slate-400 font-medium">Progress</span>
+                      <span className="text-[11px] text-emerald-400 font-bold">{Math.round((visitedStops/totalStops)*100)}%</span>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${Math.round((visitedStops/totalStops)*100)}%`, background: "linear-gradient(90deg, #34d399, #14b8a6)" }}
+                      />
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-1.5">{visitedStops} of {totalStops} visited</div>
+                  </div>
+                )}
               </div>
-            )}
-            {totalStops > 0 && (
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">{totalStops}</div>
-                <div className="text-xs text-slate-500 mt-0.5">stop{totalStops !== 1 ? "s" : ""}</div>
-              </div>
-            )}
-            {sortedBookings.length > 0 && (
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">{sortedBookings.length}</div>
-                <div className="text-xs text-slate-500 mt-0.5">booking{sortedBookings.length !== 1 ? "s" : ""}</div>
-              </div>
-            )}
-            {trip.statusRaw !== "planning" && totalStops > 0 && (
-              <div className="flex-1 ml-2">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] text-slate-500">{visitedStops}/{totalStops} visited</span>
-                  <span className="text-[11px] text-slate-500">{Math.round((visitedStops/totalStops)*100)}%</span>
-                </div>
-                <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full"
-                    style={{ width: `${Math.round((visitedStops/totalStops)*100)}%` }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -411,21 +421,28 @@ export default async function PublicTripPage({ params }: Props) {
         </div>
 
         {/* CTA */}
-        <div className="rounded-2xl bg-[#0c111d] px-6 py-8 text-center">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-3 shadow-sm">
-            <span className="text-white">✈</span>
+        <div className="rounded-2xl overflow-hidden relative text-center" style={{ background: "linear-gradient(135deg, #0c111d 0%, #111827 100%)" }}>
+          {/* Glow orbs */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] bg-blue-600/15 rounded-full blur-[60px]" />
           </div>
-          <h3 className="text-white font-semibold text-base mb-1">Plan your own adventure</h3>
-          <p className="text-slate-400 text-sm mb-4">
-            Create beautiful itineraries with TripWit — free, for web and iOS.
-          </p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-500 transition-colors shadow-sm"
-          >
-            Start planning free
-            <span className="text-blue-300">→</span>
-          </Link>
+          <div className="relative px-6 py-10">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-[0_0_20px_rgba(59,130,246,0.4)]" style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}>
+              <span className="text-white text-xl">✈</span>
+            </div>
+            <h3 className="text-white font-bold text-lg mb-2 tracking-tight">Plan your own adventure</h3>
+            <p className="text-slate-400 text-sm mb-6 max-w-xs mx-auto leading-relaxed">
+              Create beautiful itineraries with TripWit — free, for web and iPhone.
+            </p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all active:scale-[0.97] shadow-[0_0_20px_rgba(59,130,246,0.4),0_4px_12px_rgba(0,0,0,0.3)]"
+              style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+            >
+              Start planning free
+              <span>→</span>
+            </Link>
+          </div>
         </div>
 
         <p className="text-center text-xs text-slate-400 pb-4">
