@@ -295,8 +295,74 @@ export default function AppPage() {
   return (
     <div className="h-screen flex overflow-hidden">
 
-      {/* Sidebar — full-screen on mobile (when mobilePanel=sidebar), fixed 256px on desktop */}
-      <div className={`${mobilePanel === "sidebar" ? "flex" : "hidden"} md:flex flex-col w-full md:w-64 md:shrink-0 h-full`}>
+      {/* ── Mobile: sliding panel container ─────────────────────────────────── */}
+      <div className={`md:hidden mobile-panels ${mobilePanel === "detail" ? "show-detail" : ""}`}>
+        {/* Mobile sidebar panel */}
+        <div className="mobile-panel flex flex-col bg-[#0c111d]">
+          <TripsSidebar
+            trips={trips}
+            selectedTripId={selectedTripId}
+            userId={user.id}
+            user={user}
+            onSelectTrip={handleSelectTrip}
+            onCreateTrip={handleCreateTrip}
+            onDeleteTrip={handleDeleteTrip}
+            onImportTrip={handleImportTrip}
+            onDuplicateTrip={handleDuplicateTrip}
+            onSignOut={signOut}
+          />
+        </div>
+
+        {/* Mobile detail panel */}
+        <div className="mobile-panel flex flex-col overflow-hidden">
+          {/* Mobile top bar */}
+          <div className="flex items-center gap-2 px-3 h-14 border-b border-slate-200/60 bg-white shrink-0">
+            <button
+              onClick={() => setMobilePanel("sidebar")}
+              className="flex items-center gap-1 p-1.5 -ml-1 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shrink-0"
+              aria-label="Back to trips"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="text-sm font-medium">Trips</span>
+            </button>
+            <div className="flex-1 min-w-0 text-center">
+              <span className="text-sm font-semibold text-slate-900 truncate block">
+                {selectedTrip?.name ?? ""}
+              </span>
+            </div>
+            <div className="w-16 shrink-0 flex justify-end">
+              {saveStatus !== "idle" && (
+                <div className={`save-status-enter inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full transition-all ${
+                  saveStatus === "saved" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"
+                }`}>
+                  {saveStatus === "saving" && <Loader2 className="w-3 h-3 animate-spin" />}
+                  {saveStatus === "saved" && <Check className="w-3 h-3 text-emerald-400" />}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            {selectedTrip ? (
+              <TripDetail
+                trip={selectedTrip}
+                showAds={true}
+                onUpdateTrip={handleUpdateTrip}
+                onSelectStop={setSelectedStopId}
+                selectedStopId={selectedStopId}
+              />
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center px-8 bg-slate-50 h-full">
+                <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 shadow-card flex items-center justify-center text-3xl mb-4">🗺️</div>
+                <h2 className="text-lg font-semibold text-slate-800 mb-1.5">Select a trip</h2>
+                <p className="text-sm text-slate-400 max-w-xs leading-relaxed">Pick a trip from the sidebar to view and edit it.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Desktop: sidebar ─────────────────────────────────────────────────── */}
+      <div className="hidden md:flex flex-col w-64 shrink-0 h-full">
         <TripsSidebar
           trips={trips}
           selectedTripId={selectedTripId}
@@ -311,41 +377,11 @@ export default function AppPage() {
         />
       </div>
 
-      {/* Right panel — hidden on mobile when sidebar showing */}
-      <div className={`${mobilePanel === "detail" ? "flex" : "hidden"} md:flex flex-1 flex-col overflow-hidden`}>
-
-        {/* Mobile top bar — back button + trip name + save status */}
-        <div className="flex items-center gap-2 px-3 h-14 border-b border-slate-200/60 bg-white shrink-0 md:hidden">
-          <button
-            onClick={() => setMobilePanel("sidebar")}
-            className="flex items-center gap-1 p-1.5 -ml-1 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shrink-0"
-            aria-label="Back to trips"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm font-medium">Trips</span>
-          </button>
-          <div className="flex-1 min-w-0 text-center">
-            <span className="text-sm font-semibold text-slate-900 truncate block">
-              {selectedTrip?.name ?? ""}
-            </span>
-          </div>
-          {/* save status indicator (mobile) */}
-          <div className="w-16 shrink-0 flex justify-end">
-            {saveStatus !== "idle" && (
-              <div className={`inline-flex items-center gap-1 text-xs transition-all ${
-                saveStatus === "saved" ? "text-emerald-600" : "text-slate-400"
-              }`}>
-                {saveStatus === "saving" && <Loader2 className="w-3 h-3 animate-spin" />}
-                {saveStatus === "saved" && <Check className="w-3 h-3" />}
-              </div>
-            )}
-          </div>
-        </div>
+      {/* ── Desktop: right panel ─────────────────────────────────────────────── */}
+      <div className="hidden md:flex flex-1 flex-col overflow-hidden">
 
         {/* Desktop header (ads + save status) */}
-        <div className="hidden md:block">
-          <Header showAds={true} saveStatus={saveStatus} />
-        </div>
+        <Header showAds={true} saveStatus={saveStatus} />
 
         <div className="flex flex-1 overflow-hidden">
           {/* Center: Trip detail or empty state */}

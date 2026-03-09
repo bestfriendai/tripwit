@@ -268,3 +268,23 @@ input.trip-title:focus-visible {
 .save-status-enter {
   animation: slideInLeft 0.18s ease;
 }
+
+/* ── Mobile panel slide transitions ─────────────────────────────────────── */
+.mobile-panels {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.mobile-panels.show-detail {
+  transform: translateX(-50%);
+}
+
+.mobile-panel {
+  width: 50%;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+}
