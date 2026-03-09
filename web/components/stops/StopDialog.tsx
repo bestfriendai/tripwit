@@ -1,11 +1,58 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, X, MapPin, Star, Plus, Trash2, ExternalLink, Loader2, BedDouble, Utensils, Plane, Footprints, type LucideIcon } from "lucide-react";
+import { Search, X, MapPin, Star, Plus, Trash2, ExternalLink, Loader2, BedDouble, Utensils, Plane, Footprints, Clock, type LucideIcon } from "lucide-react";
 import type { Stop, StopCategory, StopTodo, StopLink } from "@/lib/types";
 import { CATEGORY_LABELS, newId } from "@/lib/types";
 import { searchPlaces, type NominatimResult } from "@/lib/nominatim";
 import { cn } from "@/components/ui/cn";
+
+// ── DateTime helpers ─────────────────────────────────────────────────────────
+const TIME_OPTIONS: string[] = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2).toString().padStart(2, "0");
+  const m = i % 2 === 0 ? "00" : "30";
+  return `${h}:${m}`;
+});
+
+function formatTimeOption(t: string): string {
+  const [hStr, mStr] = t.split(":");
+  const h = parseInt(hStr, 10);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${mStr} ${ampm}`;
+}
+
+function isoToDate(iso?: string): string {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.toISOString().slice(0, 10);
+  } catch { return ""; }
+}
+
+function isoToTime(iso?: string): string {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    const h = d.getHours().toString().padStart(2, "0");
+    const rawMin = d.getMinutes();
+    const m = (Math.round(rawMin / 30) * 30) % 60;
+    return `${h}:${m.toString().padStart(2, "0")}`;
+  } catch { return ""; }
+}
+
+function buildISO(date: string, time: string): string | undefined {
+  if (!date) return undefined;
+  const t = time || "12:00";
+  try {
+    const iso = new Date(`${date}T${t}:00`).toISOString();
+    return iso;
+  } catch { return undefined; }
+}
+
+const timeSelectClass = "bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-400 focus:bg-white focus:ring-3 focus:ring-blue-100 transition-all";
 
 interface StopDialogProps {
   stop?: Stop | null;
@@ -280,20 +327,42 @@ export default function StopDialog({ stop, onSave, onClose }: StopDialogProps) {
           {/* Times */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Arrival time</Label>
-              <Input
-                type="datetime-local"
-                value={form.arrivalTime?.slice(0, 16) ?? ""}
-                onChange={(e) => set("arrivalTime", e.target.value ? new Date(e.target.value).toISOString() : undefined)}
-              />
+              <Label><span className="flex items-center gap-1"><Clock className="w-3 h-3" />Arrival</span></Label>
+              <div className="flex gap-1.5">
+                <Input
+                  type="date"
+                  value={isoToDate(form.arrivalTime)}
+                  onChange={(e) => set("arrivalTime", buildISO(e.target.value, isoToTime(form.arrivalTime)))}
+                  className="flex-1 min-w-0"
+                />
+                <select
+                  value={isoToTime(form.arrivalTime)}
+                  onChange={(e) => set("arrivalTime", buildISO(isoToDate(form.arrivalTime), e.target.value))}
+                  className={timeSelectClass}
+                >
+                  <option value="">–</option>
+                  {TIME_OPTIONS.map((t) => <option key={t} value={t}>{formatTimeOption(t)}</option>)}
+                </select>
+              </div>
             </div>
             <div>
-              <Label>Departure time</Label>
-              <Input
-                type="datetime-local"
-                value={form.departureTime?.slice(0, 16) ?? ""}
-                onChange={(e) => set("departureTime", e.target.value ? new Date(e.target.value).toISOString() : undefined)}
-              />
+              <Label><span className="flex items-center gap-1"><Clock className="w-3 h-3" />Departure</span></Label>
+              <div className="flex gap-1.5">
+                <Input
+                  type="date"
+                  value={isoToDate(form.departureTime)}
+                  onChange={(e) => set("departureTime", buildISO(e.target.value, isoToTime(form.departureTime)))}
+                  className="flex-1 min-w-0"
+                />
+                <select
+                  value={isoToTime(form.departureTime)}
+                  onChange={(e) => set("departureTime", buildISO(isoToDate(form.departureTime), e.target.value))}
+                  className={timeSelectClass}
+                >
+                  <option value="">–</option>
+                  {TIME_OPTIONS.map((t) => <option key={t} value={t}>{formatTimeOption(t)}</option>)}
+                </select>
+              </div>
             </div>
           </div>
 

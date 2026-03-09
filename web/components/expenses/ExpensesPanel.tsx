@@ -118,11 +118,17 @@ export default function ExpensesPanel({ trip, onUpdateTrip }: ExpensesPanelProps
       <div className="px-5 py-4 space-y-2">
         {expenses.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 text-2xl">
-              💳
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+              <TrendingUp className="w-6 h-6 text-emerald-400" />
             </div>
-            <p className="text-sm font-medium text-slate-600 mb-1">No expenses yet</p>
-            <p className="text-xs text-slate-400">Track what you spend on this trip.</p>
+            <p className="text-sm font-semibold text-slate-700 mb-1">No expenses yet</p>
+            <p className="text-xs text-slate-400 mb-4 leading-relaxed">Track what you spend on this trip.</p>
+            <button
+              onClick={() => setEditing("new")}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add expense
+            </button>
           </div>
         )}
 
@@ -175,13 +181,15 @@ export default function ExpensesPanel({ trip, onUpdateTrip }: ExpensesPanelProps
           </div>
         ))}
 
-        <button
-          onClick={() => setEditing("new")}
-          className="flex items-center gap-2 w-full px-4 py-3 rounded-xl border-2 border-dashed border-slate-200 text-sm text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add expense
-        </button>
+        {expenses.length > 0 && (
+          <button
+            onClick={() => setEditing("new")}
+            className="flex items-center gap-2 w-full px-4 py-3 rounded-xl text-sm text-slate-400 hover:text-blue-500 hover:bg-blue-50/40 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add expense
+          </button>
+        )}
       </div>
 
       {editing !== null && (

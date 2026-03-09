@@ -31,10 +31,13 @@ const STATUS_DOT: Record<string, string> = {
 function formatTripDates(start: string, end: string): string {
   if (!start) return "";
   try {
-    const s = new Date(start + "T12:00:00");
-    const e = new Date(end + "T12:00:00");
+    const s0 = start.slice(0, 10);
+    const e0 = (end || start).slice(0, 10);
+    const s = new Date(s0 + "T12:00:00");
+    const e = new Date(e0 + "T12:00:00");
+    if (isNaN(s.getTime())) return "";
     const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
-    if (start === end) return s.toLocaleDateString(undefined, opts);
+    if (s0 === e0) return s.toLocaleDateString(undefined, opts);
     return `${s.toLocaleDateString(undefined, opts)} – ${e.toLocaleDateString(undefined, opts)}`;
   } catch { return ""; }
 }
@@ -282,7 +285,7 @@ export default function TripsSidebar({
               <div className="text-[12px] font-medium text-slate-300 truncate leading-tight">
                 {(user.user_metadata?.full_name as string | undefined) ?? user.email}
               </div>
-              <div className="text-[10px] text-slate-600 truncate">Free plan</div>
+              <div className="text-[10px] text-slate-500 truncate">{user.email}</div>
             </div>
             {onSignOut && (
               <button

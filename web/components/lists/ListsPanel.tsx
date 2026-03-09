@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, List } from "lucide-react";
 import type { TripList, TripListItem, Trip } from "@/lib/types";
 import { newId } from "@/lib/types";
 import { cn } from "@/components/ui/cn";
@@ -86,11 +86,17 @@ export default function ListsPanel({ trip, onUpdateTrip }: ListsPanelProps) {
     <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 tab-content">
       {lists.length === 0 && !showNewList && (
         <div className="text-center py-12">
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 text-2xl">
-            📋
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
+            <List className="w-6 h-6 text-blue-400" />
           </div>
-          <p className="text-sm font-medium text-slate-600 mb-1">No lists yet</p>
-          <p className="text-xs text-slate-400">Create packing lists, to-dos, or anything else.</p>
+          <p className="text-sm font-semibold text-slate-700 mb-1">No lists yet</p>
+          <p className="text-xs text-slate-400 mb-4 leading-relaxed">Create packing lists, to-dos, or anything else.</p>
+          <button
+            onClick={() => setShowNewList(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Plus className="w-3.5 h-3.5" /> New list
+          </button>
         </div>
       )}
 
@@ -237,15 +243,15 @@ export default function ListsPanel({ trip, onUpdateTrip }: ListsPanelProps) {
             </button>
           </div>
         </div>
-      ) : (
+      ) : lists.length > 0 ? (
         <button
           onClick={() => setShowNewList(true)}
-          className="flex items-center gap-2 w-full px-4 py-3 rounded-xl border-2 border-dashed border-slate-200 text-sm text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
+          className="flex items-center gap-2 w-full px-4 py-3 rounded-xl text-sm text-slate-400 hover:text-blue-500 hover:bg-blue-50/40 transition-colors"
         >
           <Plus className="w-4 h-4" />
           New list
         </button>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -56,11 +56,17 @@ export default function BookingsPanel({ trip, onUpdateTrip }: BookingsPanelProps
       <div className="px-5 py-4 space-y-3">
         {bookings.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 text-2xl">
-              🎫
+            <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center mx-auto mb-3">
+              <Plane className="w-6 h-6 text-sky-400" />
             </div>
-            <p className="text-sm font-medium text-slate-600 mb-1">No bookings yet</p>
-            <p className="text-xs text-slate-400">Add flights, hotels, and car rentals to keep everything in one place.</p>
+            <p className="text-sm font-semibold text-slate-700 mb-1">No bookings yet</p>
+            <p className="text-xs text-slate-400 mb-4 leading-relaxed">Add flights, hotels, and car rentals to keep everything in one place.</p>
+            <button
+              onClick={() => setEditing("new")}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add booking
+            </button>
           </div>
         )}
 
@@ -168,13 +174,15 @@ export default function BookingsPanel({ trip, onUpdateTrip }: BookingsPanelProps
           </div>
         ))}
 
-        <button
-          onClick={() => setEditing("new")}
-          className="flex items-center gap-2 w-full px-4 py-3 rounded-xl border-2 border-dashed border-slate-200 text-sm text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add booking
-        </button>
+        {bookings.length > 0 && (
+          <button
+            onClick={() => setEditing("new")}
+            className="flex items-center gap-2 w-full px-4 py-3 rounded-xl text-sm text-slate-400 hover:text-blue-500 hover:bg-blue-50/40 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add booking
+          </button>
+        )}
       </div>
 
       {editing !== null && (

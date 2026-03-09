@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Plus, Trash2, ChevronDown, ChevronUp, MapPin, Share2, Check,
   ExternalLink, Star, DollarSign, FileText, Calendar, GripVertical, Pencil,
-  Clock, Plane, BedDouble, Utensils, Footprints, type LucideIcon,
+  Clock, Plane, BedDouble, Utensils, Footprints, RotateCcw,
+  ChevronsUpDown, type LucideIcon,
 } from "lucide-react";
 import type { Trip, Day, Stop } from "@/lib/types";
 import { CATEGORY_LABELS, CATEGORY_COLORS, newId, nowISO } from "@/lib/types";
@@ -43,25 +44,58 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   completed:{ label: "✅ Done",     className: "bg-slate-100 text-slate-600 border-slate-200" },
 };
 
-function formatDayDate(dateStr: string): string {
+type UndoItem =
+  | { type: "stop"; stop: Stop; dayId: string; index: number }
+  | { type: "day"; day: Day; index: number };
+
+function formatDayDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "";
+  const clean = String(dateStr).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(clean)) return "";
   try {
-    const d = new Date(dateStr + "T12:00:00");
+    const d = new Date(clean + "T12:00:00");
+    if (isNaN(d.getTime())) return "";
     return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-  } catch { return dateStr; }
+  } catch { return ""; }
+}
+
+/** Returns display date for a day: either its own date or derived from trip start */
+function getEffectiveDate(day: Day, tripStartDate: string | null | undefined): string {
+  if (day.date && /^\d{4}-\d{2}-\d{2}$/.test(day.date.slice(0, 10))) {
+    return formatDayDate(day.date);
+  }
+  if (tripStartDate) {
+    try {
+      const d = new Date(tripStartDate.slice(0, 10) + "T12:00:00");
+      if (!isNaN(d.getTime())) {
+        d.setDate(d.getDate() + (day.dayNumber - 1));
+        return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+      }
+    } catch { /* fall through */ }
+  }
+  return "";
 }
 
 function daysBetween(start: string, end: string): number {
   try {
-    const diff = new Date(end + "T00:00:00").getTime() - new Date(start + "T00:00:00").getTime();
+    const diff = new Date(end.slice(0,10) + "T00:00:00").getTime() - new Date(start.slice(0,10) + "T00:00:00").getTime();
     return Math.max(0, Math.round(diff / 86400000)) + 1;
   } catch { return 0; }
 }
 
 function addDaysToDate(dateStr: string, n: number): string {
-  const d = new Date(dateStr + "T12:00:00");
+  const d = new Date(dateStr.slice(0, 10) + "T12:00:00");
   d.setDate(d.getDate() + n);
   return d.toISOString().slice(0, 10);
+}
+
+/** Show city/location part of an address, skipping leading street numbers */
+function addressCity(address: string | undefined): string {
+  if (!address) return "";
+  const parts = address.split(",").map((p) => p.trim());
+  // Skip first part if it looks like a pure number or is the same as stop name
+  const city = parts.find((p, i) => i > 0 && !/^\d+$/.test(p));
+  return city || parts[0] || "";
 }
 
 export default function TripDetail({
@@ -77,8 +111,9 @@ export default function TripDetail({
   const [showBudget, setShowBudget] = useState(trip.budgetAmount > 0);
   const [editingDayLocation, setEditingDayLocation] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{ dayId: string; stopId: string } | null>(null);
-  const [confirmDeleteStopId, setConfirmDeleteStopId] = useState<string | null>(null);
   const [daysLimitWarning, setDaysLimitWarning] = useState(false);
+  const [undoItem, setUndoItem] = useState<UndoItem | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -94,6 +129,37 @@ export default function TripDetail({
       return prev;
     });
   }, [trip.id, trip.days]);
+
+  // Clear undo on trip change
+  useEffect(() => {
+    setUndoItem(null);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+  }, [trip.id]);
+
+  function scheduleUndo(item: UndoItem) {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoItem(item);
+    undoTimerRef.current = setTimeout(() => setUndoItem(null), 5000);
+  }
+
+  function handleUndo() {
+    if (!undoItem) return;
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    if (undoItem.type === "stop") {
+      const day = trip.days.find((d) => d.id === undoItem.dayId);
+      if (day) {
+        const stops = [...day.stops];
+        stops.splice(undoItem.index, 0, undoItem.stop);
+        updateDay(undoItem.dayId, { stops: stops.map((s, i) => ({ ...s, sortOrder: i })) });
+      }
+    } else if (undoItem.type === "day") {
+      const days = [...trip.days];
+      days.splice(undoItem.index, 0, undoItem.day);
+      onUpdateTrip({ days: days.map((d, i) => ({ ...d, dayNumber: i + 1 })) });
+      setExpandedDays((s) => new Set([...s, undoItem.day.id]));
+    }
+    setUndoItem(null);
+  }
 
   function updateField<K extends keyof Trip>(key: K, value: Trip[K]) {
     onUpdateTrip({ [key]: value });
@@ -129,10 +195,26 @@ export default function TripDetail({
     if (newDays[0]) setExpandedDays(new Set([newDays[0].id]));
   }
 
-  function deleteDay(dayId: string) { onUpdateTrip({ days: trip.days.filter((d) => d.id !== dayId) }); }
+  function deleteDay(dayId: string) {
+    const idx = trip.days.findIndex((d) => d.id === dayId);
+    const day = trip.days[idx];
+    if (!day) return;
+    onUpdateTrip({ days: trip.days.filter((d) => d.id !== dayId) });
+    scheduleUndo({ type: "day", day, index: idx });
+  }
+
   function toggleDay(dayId: string) {
     setExpandedDays((s) => { const n = new Set(s); if (n.has(dayId)) n.delete(dayId); else n.add(dayId); return n; });
   }
+
+  function expandAllDays() {
+    setExpandedDays(new Set(trip.days.map((d) => d.id)));
+  }
+
+  function collapseAllDays() {
+    setExpandedDays(new Set());
+  }
+
   function updateDay(dayId: string, changes: Partial<Day>) {
     onUpdateTrip({ days: trip.days.map((d) => d.id === dayId ? { ...d, ...changes } : d) });
   }
@@ -145,12 +227,17 @@ export default function TripDetail({
     updateDay(dayId, { stops: newStops });
     setEditingStop(null);
   }
+
   function deleteStop(dayId: string, stopId: string) {
     const day = trip.days.find((d) => d.id === dayId);
     if (!day) return;
+    const idx = day.stops.findIndex((s) => s.id === stopId);
+    const stop = day.stops[idx];
+    if (!stop) return;
     updateDay(dayId, { stops: day.stops.filter((s) => s.id !== stopId) });
-    setConfirmDeleteStopId(null);
+    scheduleUndo({ type: "stop", stop, dayId, index: idx });
   }
+
   function toggleVisited(dayId: string, stop: Stop) {
     saveStop(dayId, { ...stop, isVisited: !stop.isVisited, visitedAt: !stop.isVisited ? nowISO() : undefined });
   }
@@ -193,7 +280,7 @@ export default function TripDetail({
   ];
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+    <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
       {/* ── Trip header card ─────────────────────────────────────────────────── */}
       <div className="mx-4 mt-4 mb-0 bg-white rounded-xl shadow-card border border-slate-100 px-5 py-4 shrink-0 space-y-3">
         <input
@@ -203,14 +290,14 @@ export default function TripDetail({
           placeholder="Trip name"
           className="trip-title w-full text-[22px] font-bold text-slate-900 placeholder-slate-300 border-0 outline-none bg-transparent leading-tight"
         />
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 group">
           <MapPin className="w-3.5 h-3.5 text-slate-300 shrink-0" />
           <input
             type="text"
             value={trip.destination}
             onChange={(e) => updateField("destination", e.target.value)}
             placeholder="Add destination…"
-            className="flex-1 text-sm text-slate-400 placeholder-slate-300 border-0 outline-none bg-transparent"
+            className="flex-1 text-sm text-slate-600 placeholder-slate-300 border-0 outline-none bg-transparent hover:text-slate-700 focus:text-slate-800 transition-colors"
           />
         </div>
 
@@ -243,6 +330,7 @@ export default function TripDetail({
             </span>
           )}
 
+          {/* Status segmented control */}
           <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 gap-0.5 shrink-0">
             {(["planning", "active", "completed"] as const).map((s) => (
               <button key={s} onClick={() => updateField("statusRaw", s)}
@@ -324,7 +412,7 @@ export default function TripDetail({
       </div>
 
       {/* ── Tab bar ─────────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 px-4 pt-3 pb-0 shrink-0">
+      <div className="flex gap-1 px-4 pt-3 pb-0 shrink-0 items-end">
         {TABS.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={cn(
@@ -344,6 +432,17 @@ export default function TripDetail({
             )}
           </button>
         ))}
+        {/* Expand/collapse all — only shown on days tab */}
+        {tab === "days" && sortedDays.length > 1 && (
+          <button
+            onClick={() => expandedDays.size === sortedDays.length ? collapseAllDays() : expandAllDays()}
+            title={expandedDays.size === sortedDays.length ? "Collapse all" : "Expand all"}
+            className="ml-auto mb-0.5 flex items-center gap-1 text-[11px] text-slate-400 hover:text-blue-600 transition-colors px-2 py-1 rounded-lg hover:bg-blue-50"
+          >
+            <ChevronsUpDown className="w-3 h-3" />
+            {expandedDays.size === sortedDays.length ? "Collapse all" : "Expand all"}
+          </button>
+        )}
         {/* Tab bar line */}
         <div className="flex-1 border-b-2 border-b-slate-100" />
       </div>
@@ -359,7 +458,7 @@ export default function TripDetail({
           {sortedDays.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
               <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-                <span className="text-3xl">📅</span>
+                <Calendar className="w-7 h-7 text-blue-500" />
               </div>
               <p className="text-base font-semibold text-slate-700 mb-1">No days planned yet</p>
               <p className="text-sm text-slate-400 max-w-xs mb-5 leading-relaxed">
@@ -378,6 +477,11 @@ export default function TripDetail({
           {sortedDays.map((day, dayIdx) => {
             const isExpanded = expandedDays.has(day.id);
             const sortedStops = [...day.stops].sort((a, b) => a.sortOrder - b.sortOrder);
+            const displayDate = getEffectiveDate(day, trip.startDate);
+
+            // Mini category icons for collapsed preview
+            const stopCategories = sortedStops.map((s) => s.categoryRaw);
+            const uniqueCategories = [...new Set(stopCategories)].slice(0, 5);
 
             return (
               <div key={day.id}>
@@ -404,7 +508,7 @@ export default function TripDetail({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {editingDayLocation === day.id ? (
                         <input autoFocus type="text" value={day.location}
                           onClick={(e) => e.stopPropagation()}
@@ -422,14 +526,43 @@ export default function TripDetail({
                           {day.location || `Day ${day.dayNumber}`}
                         </span>
                       )}
-                      <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-medium shrink-0">{formatDayDate(day.date)}</span>
+                      {displayDate && (
+                        <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-medium shrink-0">{displayDate}</span>
+                      )}
                       {!isExpanded && day.stops.length > 0 && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">
                           {day.stops.length} stop{day.stops.length !== 1 ? "s" : ""}
                         </span>
                       )}
                     </div>
-                    {!editingDayLocation && !day.location && (
+                    {/* Collapsed summary: location placeholder or mini category icons */}
+                    {!isExpanded && (
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {!editingDayLocation && !day.location && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-slate-300" />
+                            <span className="text-xs text-slate-300 cursor-text"
+                              onClick={(e) => { e.stopPropagation(); setEditingDayLocation(day.id); }}>
+                              Add location…
+                            </span>
+                          </div>
+                        )}
+                        {uniqueCategories.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            {uniqueCategories.map((cat) => {
+                              const CatIcon = CATEGORY_ICON_MAP[cat] ?? MapPin;
+                              return (
+                                <span key={cat} className="w-4 h-4 rounded-full flex items-center justify-center"
+                                  style={{ backgroundColor: `${CATEGORY_COLORS[cat]}22` }}>
+                                  <CatIcon className="w-2 h-2" style={{ color: CATEGORY_COLORS[cat] }} />
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {isExpanded && !editingDayLocation && !day.location && (
                       <div className="flex items-center gap-1 mt-0.5">
                         <MapPin className="w-3 h-3 text-slate-300" />
                         <span className="text-xs text-slate-300 cursor-text"
@@ -442,7 +575,7 @@ export default function TripDetail({
 
                   {/* Date picker + delete (hidden until hover) */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <input type="date" value={day.date}
+                    <input type="date" value={day.date?.slice(0, 10) ?? ""}
                       onClick={(e) => e.stopPropagation()}
                       onChange={(e) => updateDay(day.id, { date: e.target.value })}
                       className="text-xs border border-slate-200 rounded px-1.5 py-0.5 bg-white cursor-pointer w-[6.5rem]"
@@ -514,9 +647,10 @@ export default function TripDetail({
                                   </span>
                                 );
                               })()}
-                              {stop.address && (
-                                <span className="text-[11px] text-slate-400">{stop.address.split(",")[0]}</span>
-                              )}
+                              {stop.address && (() => {
+                                const city = addressCity(stop.address);
+                                return city ? <span className="text-[11px] text-slate-400 truncate max-w-[140px]">{city}</span> : null;
+                              })()}
                             </div>
 
                             <div className="flex items-center gap-2.5 mt-1 flex-wrap">
@@ -560,46 +694,36 @@ export default function TripDetail({
                             </div>
                           </div>
 
-                          {/* Stop actions */}
-                          {confirmDeleteStopId === stop.id ? (
-                            <div className="flex flex-col gap-1 shrink-0 items-end pl-1" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); deleteStop(day.id, stop.id); }}
-                                className="text-[10px] text-red-500 hover:text-red-700 font-semibold whitespace-nowrap"
-                              >Delete</button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setConfirmDeleteStopId(null); }}
-                                className="text-[10px] text-slate-400 hover:text-slate-600"
-                              >Cancel</button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-0.5 shrink-0">
-                              <button onClick={(e) => { e.stopPropagation(); toggleVisited(day.id, stop); }}
-                                className={cn("w-7 h-7 rounded-lg flex items-center justify-center transition-colors",
-                                  stop.isVisited ? "bg-emerald-50 text-emerald-600" : "text-slate-200 hover:bg-emerald-50 hover:text-emerald-600"
-                                )}
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                              </button>
-                              <button onClick={(e) => { e.stopPropagation(); setEditingStop({ dayId: day.id, stop }); }}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-200 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                              <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteStopId(stop.id); }}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-200 hover:bg-red-50 hover:text-red-500 transition-colors"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )}
+                          {/* Stop actions — always visible at low opacity, full on hover */}
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            <button onClick={(e) => { e.stopPropagation(); toggleVisited(day.id, stop); }}
+                              className={cn("w-7 h-7 rounded-lg flex items-center justify-center transition-colors",
+                                stop.isVisited ? "bg-emerald-50 text-emerald-600" : "text-slate-300 hover:bg-emerald-50 hover:text-emerald-600"
+                              )}
+                              title={stop.isVisited ? "Mark unvisited" : "Mark visited"}
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); setEditingStop({ dayId: day.id, stop }); }}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-300 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                              title="Edit stop"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); deleteStop(day.id, stop.id); }}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
+                              title="Delete stop"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
 
-                    {/* Add stop */}
+                    {/* Add stop — clean text button */}
                     <button onClick={() => setEditingStop({ dayId: day.id, stop: null })}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl border border-dashed border-slate-200 text-sm text-slate-400 hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/40 transition-all"
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-slate-400 hover:text-blue-500 hover:bg-blue-50/40 transition-all"
                     >
                       <Plus className="w-4 h-4" /> Add stop
                     </button>
@@ -609,17 +733,33 @@ export default function TripDetail({
             );
           })}
 
-          {/* Add day */}
+          {/* Add day — clean text button */}
           {sortedDays.length > 0 && (
             <button onClick={addDay}
               className="flex items-center gap-2 px-4 py-3.5 w-full text-sm text-slate-400 hover:text-blue-500 hover:bg-blue-50/40 transition-all border-t border-slate-100 group"
             >
-              <div className="w-5 h-5 rounded-full border border-dashed border-slate-300 group-hover:border-blue-400 flex items-center justify-center transition-colors shrink-0">
+              <div className="w-5 h-5 rounded-full border border-slate-300 group-hover:border-blue-400 flex items-center justify-center transition-colors shrink-0">
                 <Plus className="w-3 h-3" />
               </div>
               Add day
             </button>
           )}
+        </div>
+      )}
+
+      {/* ── Undo toast ────────────────────────────────────────────────────────── */}
+      {undoItem && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-slate-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-lg animate-in slide-in-from-bottom-2 duration-200">
+          <span className="text-slate-300">
+            {undoItem.type === "stop" ? `"${undoItem.stop.name}" deleted` : `Day ${undoItem.day.dayNumber} deleted`}
+          </span>
+          <button
+            onClick={handleUndo}
+            className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Undo
+          </button>
         </div>
       )}
 
