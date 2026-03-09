@@ -96,7 +96,7 @@ export default function TripsSidebar({
 
   return (
     <aside
-      className="w-64 shrink-0 flex flex-col h-full select-none bg-[#0c111d] border-r border-white/5"
+      className="w-full flex flex-col h-full select-none bg-[#0c111d] border-r border-white/5"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

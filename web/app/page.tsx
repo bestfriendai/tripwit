@@ -9,7 +9,9 @@ import MapPanel from "@/components/layout/MapPanel";
 import { getTrips, createTrip, updateTrip, deleteTrip, insertTrip } from "@/lib/db";
 import type { Trip, Stop } from "@/lib/types";
 import { newId, nowISO } from "@/lib/types";
-import { Map } from "lucide-react";
+import { Map, ChevronLeft, Check, Loader2 } from "lucide-react";
+
+type MobilePanel = "sidebar" | "detail";
 
 export default function AppPage() {
   const { user, loading, signIn, signOut } = useAuth();
@@ -21,6 +23,7 @@ export default function AppPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mapCollapsed, setMapCollapsed] = useState(false);
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>("sidebar");
 
   useEffect(() => {
     if (!user) return;
@@ -40,13 +43,20 @@ export default function AppPage() {
         .sort((a, b) => a.sortOrder - b.sortOrder)
     : [];
 
+  const handleSelectTrip = useCallback((id: string) => {
+    setSelectedTripId(id);
+    setSelectedStopId(null);
+    setMobilePanel("detail");
+  }, []);
+
   const handleCreateTrip = useCallback(async () => {
     if (!user) return;
     try {
       const trip = await createTrip(user.id);
       setTrips((prev) => [trip, ...prev]);
       setSelectedTripId(trip.id);
-    } catch { /* silent — trip stays as-is */ }
+      setMobilePanel("detail");
+    } catch { /* silent */ }
   }, [user]);
 
   const handleDeleteTrip = useCallback(async (id: string) => {
@@ -60,7 +70,7 @@ export default function AppPage() {
         });
         return remaining;
       });
-    } catch { /* silent — list stays as-is */ }
+    } catch { /* silent */ }
   }, []);
 
   const handleImportTrip = useCallback(async (trip: Trip) => {
@@ -70,7 +80,8 @@ export default function AppPage() {
       await insertTrip(tripWithUser);
       setTrips((prev) => [tripWithUser, ...prev]);
       setSelectedTripId(trip.id);
-    } catch { /* silent — list stays as-is */ }
+      setMobilePanel("detail");
+    } catch { /* silent */ }
   }, [user]);
 
   const handleDuplicateTrip = useCallback(async (trip: Trip) => {
@@ -102,6 +113,7 @@ export default function AppPage() {
     await insertTrip(dupe);
     setTrips((prev) => [dupe, ...prev]);
     setSelectedTripId(dupe.id);
+    setMobilePanel("detail");
   }, [user]);
 
   const handleUpdateTrip = useCallback(async (changes: Partial<Trip>) => {
@@ -201,26 +213,61 @@ export default function AppPage() {
     );
   }
 
-  // ── Main app — sidebar spans full height, header only above content ────────
+  // ── Main app ───────────────────────────────────────────────────────────────
   return (
     <div className="h-screen flex overflow-hidden">
-      {/* Sidebar — full height */}
-      <TripsSidebar
-        trips={trips}
-        selectedTripId={selectedTripId}
-        userId={user.id}
-        user={user}
-        onSelectTrip={(id) => { setSelectedTripId(id); setSelectedStopId(null); }}
-        onCreateTrip={handleCreateTrip}
-        onDeleteTrip={handleDeleteTrip}
-        onImportTrip={handleImportTrip}
-        onDuplicateTrip={handleDuplicateTrip}
-        onSignOut={signOut}
-      />
 
-      {/* Right panel: header + content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header showAds={true} saveStatus={saveStatus} />
+      {/* Sidebar — full-screen on mobile (when mobilePanel=sidebar), fixed 256px on desktop */}
+      <div className={`${mobilePanel === "sidebar" ? "flex" : "hidden"} md:flex flex-col w-full md:w-64 md:shrink-0 h-full`}>
+        <TripsSidebar
+          trips={trips}
+          selectedTripId={selectedTripId}
+          userId={user.id}
+          user={user}
+          onSelectTrip={handleSelectTrip}
+          onCreateTrip={handleCreateTrip}
+          onDeleteTrip={handleDeleteTrip}
+          onImportTrip={handleImportTrip}
+          onDuplicateTrip={handleDuplicateTrip}
+          onSignOut={signOut}
+        />
+      </div>
+
+      {/* Right panel — hidden on mobile when sidebar showing */}
+      <div className={`${mobilePanel === "detail" ? "flex" : "hidden"} md:flex flex-1 flex-col overflow-hidden`}>
+
+        {/* Mobile top bar — back button + trip name + save status */}
+        <div className="flex items-center gap-2 px-3 h-14 border-b border-slate-200/60 bg-white shrink-0 md:hidden">
+          <button
+            onClick={() => setMobilePanel("sidebar")}
+            className="flex items-center gap-1 p-1.5 -ml-1 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shrink-0"
+            aria-label="Back to trips"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span className="text-sm font-medium">Trips</span>
+          </button>
+          <div className="flex-1 min-w-0 text-center">
+            <span className="text-sm font-semibold text-slate-900 truncate block">
+              {selectedTrip?.name ?? ""}
+            </span>
+          </div>
+          {/* save status indicator (mobile) */}
+          <div className="w-16 shrink-0 flex justify-end">
+            {saveStatus !== "idle" && (
+              <div className={`inline-flex items-center gap-1 text-xs transition-all ${
+                saveStatus === "saved" ? "text-emerald-600" : "text-slate-400"
+              }`}>
+                {saveStatus === "saving" && <Loader2 className="w-3 h-3 animate-spin" />}
+                {saveStatus === "saved" && <Check className="w-3 h-3" />}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop header (ads + save status) */}
+        <div className="hidden md:block">
+          <Header showAds={true} saveStatus={saveStatus} />
+        </div>
 
         <div className="flex flex-1 overflow-hidden">
           {/* Center: Trip detail or empty state */}
@@ -256,30 +303,32 @@ export default function AppPage() {
             </div>
           )}
 
-          {/* Right: Map (collapsible) */}
-          {!mapCollapsed ? (
-            <div className="w-96 shrink-0 border-l border-slate-200 relative bg-slate-100">
+          {/* Right: Map (collapsible, hidden on mobile) */}
+          <div className="hidden md:flex">
+            {!mapCollapsed ? (
+              <div className="w-96 shrink-0 border-l border-slate-200 relative bg-slate-100">
+                <button
+                  onClick={() => setMapCollapsed(true)}
+                  className="absolute top-3 left-3 z-[1000] flex items-center gap-1.5 bg-white/95 backdrop-blur-sm rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 shadow-[0_1px_4px_rgba(0,0,0,0.12)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all border border-slate-200/80"
+                >
+                  <Map className="w-3 h-3" />
+                  Hide map
+                </button>
+                <MapPanel stops={mapStops} selectedStopId={selectedStopId} onSelectStop={setSelectedStopId} />
+              </div>
+            ) : (
               <button
-                onClick={() => setMapCollapsed(true)}
-                className="absolute top-3 left-3 z-[1000] flex items-center gap-1.5 bg-white/95 backdrop-blur-sm rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 shadow-[0_1px_4px_rgba(0,0,0,0.12)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all border border-slate-200/80"
+                onClick={() => setMapCollapsed(false)}
+                className="shrink-0 w-9 border-l border-slate-200 flex flex-col items-center justify-center gap-1.5 bg-slate-50 hover:bg-slate-100 transition-colors group"
+                title="Show map"
               >
-                <Map className="w-3 h-3" />
-                Hide map
+                <Map className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                <span className="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium transition-colors [writing-mode:vertical-lr] rotate-180 tracking-wide">
+                  Map
+                </span>
               </button>
-              <MapPanel stops={mapStops} selectedStopId={selectedStopId} onSelectStop={setSelectedStopId} />
-            </div>
-          ) : (
-            <button
-              onClick={() => setMapCollapsed(false)}
-              className="shrink-0 w-9 border-l border-slate-200 flex flex-col items-center justify-center gap-1.5 bg-slate-50 hover:bg-slate-100 transition-colors group"
-              title="Show map"
-            >
-              <Map className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
-              <span className="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium transition-colors [writing-mode:vertical-lr] rotate-180 tracking-wide">
-                Map
-              </span>
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
