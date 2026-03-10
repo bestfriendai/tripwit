@@ -113,18 +113,15 @@ export default async function PublicTripPage({ params }: Props) {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0c111d]/95 backdrop-blur-md border-b border-white/8">
         <div className="max-w-3xl mx-auto px-5 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm">
-              <span className="text-white text-xs">✈</span>
-            </div>
+          <Link href="/" className="flex items-center gap-2 group">
+            <img src="/icon-512.png" alt="TripWit" className="w-6 h-6 rounded-lg object-cover shadow-sm group-hover:shadow-[0_0_8px_rgba(59,130,246,0.4)] transition-shadow" />
             <span className="text-white font-semibold text-[14px]">TripWit</span>
           </Link>
           <Link
             href="/"
-            className="text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+            className="text-xs font-semibold text-white bg-blue-600/80 hover:bg-blue-600 border border-blue-500/40 px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 hover:shadow-[0_0_12px_rgba(59,130,246,0.4)]"
           >
-            Plan your own trip
-            <span className="text-blue-500">→</span>
+            ✈ Plan your own trip
           </Link>
         </div>
       </nav>
@@ -319,11 +316,11 @@ export default async function PublicTripPage({ params }: Props) {
 
                           <div className="flex-1 min-w-0 pb-1">
                             <div className="flex items-start gap-2 flex-wrap">
-                              <span className={`font-semibold text-sm ${stop.isVisited ? "line-through text-slate-400" : "text-slate-800"}`}>
+                              <span className={`font-semibold text-sm ${stop.isVisited ? "text-slate-400" : "text-slate-800"}`}>
                                 {stop.name}
                               </span>
                               {stop.isVisited && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full shrink-0">
                                   ✓ Visited
                                 </span>
                               )}

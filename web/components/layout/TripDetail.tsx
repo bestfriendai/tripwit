@@ -5,7 +5,7 @@ import {
   Plus, Trash2, ChevronDown, ChevronUp, MapPin, Share2, Check,
   ExternalLink, Star, DollarSign, FileText, Calendar, GripVertical, Pencil,
   Clock, Plane, BedDouble, Utensils, Footprints, RotateCcw,
-  ChevronsUpDown, type LucideIcon,
+  ChevronsUpDown, Bookmark, List, type LucideIcon,
 } from "lucide-react";
 import type { Trip, Day, Stop } from "@/lib/types";
 import { CATEGORY_LABELS, CATEGORY_COLORS, newId, nowISO } from "@/lib/types";
@@ -272,11 +272,11 @@ export default function TripDetail({
   const totalStops = trip.days.reduce((c, d) => c + d.stops.length, 0);
   const visitedStops = trip.days.reduce((c, d) => c + d.stops.filter((s) => s.isVisited).length, 0);
 
-  const TABS: { key: Tab; label: string; count?: number }[] = [
-    { key: "days", label: "Days", count: trip.days.length },
-    { key: "bookings", label: "Bookings", count: trip.bookings.length || undefined },
-    { key: "expenses", label: "Expenses", count: trip.expenses.length || undefined },
-    { key: "lists", label: "Lists", count: trip.lists.length || undefined },
+  const TABS: { key: Tab; label: string; count?: number; icon: LucideIcon }[] = [
+    { key: "days",     label: "Days",     count: trip.days.length,              icon: Calendar  },
+    { key: "bookings", label: "Bookings", count: trip.bookings.length || undefined, icon: Bookmark  },
+    { key: "expenses", label: "Expenses", count: trip.expenses.length || undefined, icon: DollarSign},
+    { key: "lists",    label: "Lists",    count: trip.lists.length || undefined, icon: List      },
   ];
 
   return (
@@ -425,6 +425,7 @@ export default function TripDetail({
                 : "text-slate-500 hover:text-slate-700 border-b-transparent hover:bg-white/60"
             )}
           >
+            <t.icon className={cn("w-3 h-3 shrink-0", tab === t.key ? "text-blue-500" : "text-slate-400")} />
             {t.label}
             {t.count !== undefined && t.count > 0 && (
               <span className={cn("px-1.5 py-0.5 rounded-full text-[10px] font-bold",
@@ -605,7 +606,10 @@ export default function TripDetail({
                 {/* ── Stops ─────────────────────────────────────────────────── */}
                 {isExpanded && (
                   <div className="py-2 px-3 space-y-1.5 day-stops-enter">
-                    {sortedStops.map((stop) => (
+                    {sortedStops.length === 0 && (
+                      <p className="text-xs text-slate-300 text-center py-2 italic">No stops added yet</p>
+                    )}
+                    {sortedStops.map((stop, stopIdx) => (
                       <div
                         key={stop.id}
                         draggable
@@ -631,6 +635,11 @@ export default function TripDetail({
                         {/* Drag handle */}
                         <div className="flex items-center px-1.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
                           <GripVertical className="w-3 h-3 text-slate-300" />
+                        </div>
+
+                        {/* Stop order number */}
+                        <div className="text-[10px] font-bold text-slate-200 w-4 text-center shrink-0 select-none self-start pt-3 group-hover:text-slate-300 transition-colors">
+                          {stopIdx + 1}
                         </div>
 
                         {/* Content */}
@@ -735,11 +744,14 @@ export default function TripDetail({
                       </div>
                     ))}
 
-                    {/* Add stop — clean text button */}
+                    {/* Add stop — dashed card style */}
                     <button onClick={() => setEditingStop({ dayId: day.id, stop: null })}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-slate-400 hover:text-blue-500 hover:bg-blue-50/40 transition-all"
+                      className="group flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm text-slate-400 hover:text-blue-500 transition-all border border-dashed border-transparent hover:border-blue-200 hover:bg-blue-50/30 mt-0.5"
                     >
-                      <Plus className="w-4 h-4" /> Add stop
+                      <div className="w-5 h-5 rounded-full border border-slate-300 group-hover:border-blue-400 group-hover:bg-blue-50 flex items-center justify-center transition-all shrink-0">
+                        <Plus className="w-3 h-3" />
+                      </div>
+                      Add stop
                     </button>
                   </div>
                 )}

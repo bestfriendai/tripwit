@@ -173,7 +173,7 @@ export default function AppPage() {
             <img
               src="/icon-512.png"
               alt="TripWit"
-              className="w-20 h-20 rounded-3xl object-cover mx-auto mb-7 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_40px_rgba(59,130,246,0.45)]"
+              className="w-20 h-20 rounded-3xl object-cover mx-auto mb-7 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_40px_rgba(59,130,246,0.45)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_12px_48px_rgba(59,130,246,0.55)] transition-shadow duration-500"
             />
             <h1 className="text-[28px] font-extrabold text-white mb-2.5 tracking-tight leading-tight">Welcome to TripWit</h1>
             <p className="text-slate-400 text-[14px] leading-relaxed mb-8 max-w-[280px] mx-auto">
@@ -181,7 +181,7 @@ export default function AppPage() {
             </p>
             <button
               onClick={signIn}
-              className="inline-flex items-center gap-3 w-full justify-center px-5 py-3.5 bg-white text-slate-800 rounded-xl font-semibold text-sm hover:bg-slate-50 active:scale-[0.98] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.25)] mb-6"
+              className="inline-flex items-center gap-3 w-full justify-center px-5 py-3.5 bg-white text-slate-800 rounded-xl font-semibold text-sm hover:bg-slate-50 active:scale-[0.98] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:shadow-[0_6px_28px_rgba(59,130,246,0.22),0_4px_20px_rgba(0,0,0,0.2)] mb-6"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -192,14 +192,14 @@ export default function AppPage() {
               Continue with Google
             </button>
             {/* Feature chips */}
-            <div className="flex flex-wrap justify-center gap-2 mb-6">
+            <div className="flex flex-wrap justify-center gap-2 mb-5">
               {[
                 { icon: "📍", label: "Day-by-day itinerary" },
                 { icon: "✈️", label: "Flights & hotels" },
                 { icon: "💰", label: "Budget tracking" },
                 { icon: "🗺️", label: "Interactive map" },
               ].map(({ icon, label }) => (
-                <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[12px] text-slate-400">
+                <span key={label} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-[12px] text-slate-400 hover:text-slate-300 hover:border-white/20 transition-colors">
                   <span>{icon}</span>
                   {label}
                 </span>

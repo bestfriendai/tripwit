@@ -28,6 +28,12 @@ const STATUS_DOT: Record<string, string> = {
   completed:"bg-slate-500",
 };
 
+const STATUS_DOT_PULSE: Record<string, boolean> = {
+  planning: false,
+  active:   true,
+  completed:false,
+};
+
 function formatTripDates(start: string, end: string): string {
   if (!start) return "";
   try {
@@ -109,9 +115,16 @@ export default function TripsSidebar({
 
       {/* ── Section header + actions ─────────────────── */}
       <div className="flex items-center justify-between px-4 pt-5 pb-2 shrink-0">
-        <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
-          My Trips
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
+            My Trips
+          </span>
+          {trips.length > 0 && (
+            <span className="text-[10px] font-bold text-slate-500 bg-white/8 px-1.5 py-0.5 rounded-full tabular-nums">
+              {trips.length}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-0.5">
           {selectedTrip && (
             <IconBtn onClick={() => downloadTripwit(selectedTrip)} title="Export .tripwit">
@@ -192,7 +205,11 @@ export default function TripsSidebar({
                 <div className="absolute left-0 top-2.5 bottom-2.5 w-0.5 bg-blue-500 rounded-r-full" />
               )}
               <div className="flex items-start gap-2.5">
-                <div className={cn("w-1.5 h-1.5 rounded-full mt-[5px] shrink-0", STATUS_DOT[trip.statusRaw] ?? "bg-slate-500")} />
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full mt-[5px] shrink-0",
+                  STATUS_DOT[trip.statusRaw] ?? "bg-slate-500",
+                  STATUS_DOT_PULSE[trip.statusRaw] && "status-pulse"
+                )} />
                 <div className="flex-1 min-w-0">
                   <div className={cn(
                     "text-[13px] font-medium leading-snug truncate",
@@ -212,11 +229,15 @@ export default function TripsSidebar({
                         {formatTripDates(trip.startDate, trip.endDate)}
                       </span>
                     )}
-                    {stopCount > 0 && (
+                    {stopCount > 0 && trip.statusRaw === "active" ? (
+                      <span className="text-[10px] text-emerald-500 font-medium">
+                        {trip.startDate && "· "}{visitedCount}/{stopCount} visited
+                      </span>
+                    ) : stopCount > 0 ? (
                       <span className="text-[10px] text-slate-600">
                         {trip.startDate && "· "}{stopCount} stop{stopCount !== 1 ? "s" : ""}
                       </span>
-                    )}
+                    ) : null}
                   </div>
                   {trip.statusRaw === "active" && stopCount > 0 && (
                     <div className="mt-2 h-[2px] bg-white/8 rounded-full overflow-hidden">

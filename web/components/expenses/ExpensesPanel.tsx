@@ -117,6 +117,40 @@ export default function ExpensesPanel({ trip, onUpdateTrip }: ExpensesPanelProps
               />
             </div>
           )}
+
+          {/* Category breakdown */}
+          {expenses.length > 0 && (() => {
+            const byCategory = expenses
+              .filter((e) => e.currencyCode === budgetCurrency)
+              .reduce((acc, e) => { acc[e.categoryRaw] = (acc[e.categoryRaw] ?? 0) + e.amount; return acc; }, {} as Record<string, number>);
+            const entries = Object.entries(byCategory).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a).slice(0, 5);
+            const max = entries[0]?.[1] ?? 1;
+            if (entries.length < 2) return null;
+            return (
+              <div className="px-5 pt-3 pb-4 border-t border-slate-100 space-y-2">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2.5">By category</p>
+                {entries.map(([cat, amount]) => {
+                  const Icon = CATEGORY_ICON_MAP[cat] ?? MoreHorizontal;
+                  const pct = (amount / max) * 100;
+                  return (
+                    <div key={cat} className="flex items-center gap-2.5">
+                      <Icon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-medium text-slate-600">{CATEGORY_LABELS[cat]}</span>
+                          <span className="text-[11px] font-bold text-slate-700 tabular-nums">{formatAmount(amount, budgetCurrency)}</span>
+                        </div>
+                        <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all duration-700"
+                            style={{ width: `${pct}%`, background: "linear-gradient(90deg, #93c5fd, #3b82f6)" }} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 

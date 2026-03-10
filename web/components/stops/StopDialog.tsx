@@ -264,19 +264,20 @@ export default function StopDialog({ stop, onSave, onClose }: StopDialogProps) {
             <div className="flex flex-wrap gap-1.5">
               {CATEGORIES.map((cat) => {
                 const CatIcon = CATEGORY_ICON_MAP[cat] ?? MapPin;
+                const isActive = form.categoryRaw === cat;
                 return (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => set("categoryRaw", cat)}
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all",
-                      form.categoryRaw === cat
-                        ? CATEGORY_COLORS_BG[cat] + " shadow-sm"
-                        : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+                      "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all active:scale-95",
+                      isActive
+                        ? CATEGORY_COLORS_BG[cat] + " shadow-sm scale-[1.03]"
+                        : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700 hover:shadow-sm"
                     )}
                   >
-                    <CatIcon className="w-3.5 h-3.5" />
+                    <CatIcon className={cn("w-4 h-4", isActive ? "" : "text-slate-400")} />
                     {CATEGORY_LABELS[cat]}
                   </button>
                 );
@@ -317,9 +318,9 @@ export default function StopDialog({ stop, onSave, onClose }: StopDialogProps) {
               </ul>
             )}
             {hasLocation && (
-              <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-green-500" />
-                Pinned · {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
+              <p className="text-[11px] mt-1.5 flex items-center gap-1.5 text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5 font-medium">
+                <MapPin className="w-3 h-3 text-emerald-500 shrink-0" />
+                Location pinned · {form.latitude.toFixed(4)}, {form.longitude.toFixed(4)}
               </p>
             )}
           </div>
@@ -419,8 +420,11 @@ export default function StopDialog({ stop, onSave, onClose }: StopDialogProps) {
             <Label>Rating</Label>
             <div className="flex items-center gap-1.5">
               {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} type="button" onClick={() => set("rating", form.rating === n ? 0 : n)} className="p-0.5 transition-transform hover:scale-110 active:scale-95">
-                  <Star className={cn("w-5 h-5 transition-colors", n <= form.rating ? "text-amber-400 fill-amber-400" : "text-slate-200 hover:text-amber-300")} />
+                <button key={n} type="button" onClick={() => set("rating", form.rating === n ? 0 : n)}
+                  className="p-0.5 transition-transform hover:scale-[1.18] active:scale-90 select-none">
+                  <Star className={cn("w-6 h-6 transition-all duration-100",
+                    n <= form.rating ? "text-amber-400 fill-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" : "text-slate-200 hover:text-amber-300"
+                  )} />
                 </button>
               ))}
               {form.rating > 0 && (
