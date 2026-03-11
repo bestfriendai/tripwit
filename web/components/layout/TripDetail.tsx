@@ -110,6 +110,7 @@ export default function TripDetail({
   const [showNotes, setShowNotes] = useState(!!trip.notes);
   const [showBudget, setShowBudget] = useState(trip.budgetAmount > 0);
   const [editingDayLocation, setEditingDayLocation] = useState<string | null>(null);
+  const [editingDayDescription, setEditingDayDescription] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{ dayId: string; stopId: string } | null>(null);
   const [daysLimitWarning, setDaysLimitWarning] = useState(false);
   const [undoItem, setUndoItem] = useState<UndoItem | null>(null);
@@ -283,6 +284,21 @@ export default function TripDetail({
       if (s) return { lat: s.latitude, lon: s.longitude };
     }
     return undefined;
+  }
+
+  function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371;
+    const toRad = (d: number) => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function formatDistance(km: number): string {
+    if (km < 1) return `${Math.round(km * 1000)} m`;
+    if (km < 10) return `${km.toFixed(1)} km`;
+    return `${Math.round(km)} km`;
   }
 
   const sortedDays = [...trip.days].sort((a, b) => a.dayNumber - b.dayNumber);
@@ -546,12 +562,19 @@ export default function TripDetail({
                           className="text-sm font-semibold text-slate-900 border-0 outline-none bg-transparent"
                         />
                       ) : (
-                        <span
-                          className="text-sm font-semibold text-slate-900 cursor-text hover:text-blue-600 transition-colors"
-                          onClick={(e) => { e.stopPropagation(); setEditingDayLocation(day.id); }}
-                        >
-                          {day.location || `Day ${day.dayNumber}`}
-                        </span>
+                        <>
+                          <span className="text-sm font-semibold text-slate-900">
+                            {day.location || `Day ${day.dayNumber}`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setEditingDayLocation(day.id); }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-slate-300 hover:text-blue-400 shrink-0"
+                            title="Edit location"
+                          >
+                            <Pencil className="w-2.5 h-2.5" />
+                          </button>
+                        </>
                       )}
                       {displayDate && (
                         <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-medium shrink-0">{displayDate}</span>
@@ -562,6 +585,42 @@ export default function TripDetail({
                         </span>
                       )}
                     </div>
+
+                    {/* Day description (day.notes) */}
+                    {editingDayDescription === day.id ? (
+                      <input
+                        autoFocus
+                        type="text"
+                        value={day.notes}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => updateDay(day.id, { notes: e.target.value })}
+                        onBlur={() => setEditingDayDescription(null)}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") setEditingDayDescription(null); }}
+                        placeholder="Add a description for this day…"
+                        className="mt-0.5 text-xs text-slate-500 italic border-0 outline-none bg-transparent w-full"
+                      />
+                    ) : day.notes ? (
+                      <div className="flex items-center gap-1 mt-0.5 group/desc">
+                        <span className="text-xs text-slate-500 italic truncate">{day.notes}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setEditingDayDescription(day.id); }}
+                          className="opacity-0 group-hover/desc:opacity-100 transition-opacity p-0.5 rounded text-slate-300 hover:text-blue-400 shrink-0"
+                          title="Edit description"
+                        >
+                          <Pencil className="w-2 h-2" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setEditingDayDescription(day.id); }}
+                        className="mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] text-slate-300 hover:text-blue-400 text-left"
+                      >
+                        + description
+                      </button>
+                    )}
+
                     {/* Collapsed summary: location placeholder or mini category icons */}
                     {!isExpanded && (
                       <div className="flex items-center gap-2 mt-0.5">
@@ -626,7 +685,20 @@ export default function TripDetail({
                     {sortedStops.length === 0 && (
                       <p className="text-xs text-slate-300 text-center py-2 italic">No stops added yet</p>
                     )}
-                    {sortedStops.map((stop, stopIdx) => (
+                    {sortedStops.flatMap((stop, stopIdx) => {
+                      const next = sortedStops[stopIdx + 1];
+                      const hasCoords = stop.latitude !== 0 || stop.longitude !== 0;
+                      const nextHasCoords = next && (next.latitude !== 0 || next.longitude !== 0);
+                      const distRow = (hasCoords && nextHasCoords) ? (
+                        <div key={`dist-${stop.id}`} className="flex items-center gap-2 px-3 py-0.5 text-[10px] text-slate-400">
+                          <div className="flex-1 h-px bg-slate-100" />
+                          <span className="tabular-nums font-medium shrink-0">
+                            {formatDistance(haversineKm(stop.latitude, stop.longitude, next.latitude, next.longitude))}
+                          </span>
+                          <div className="flex-1 h-px bg-slate-100" />
+                        </div>
+                      ) : null;
+                      return [
                       <div
                         key={stop.id}
                         draggable
@@ -759,7 +831,8 @@ export default function TripDetail({
                           </div>
                         </div>
                       </div>
-                    ))}
+                      , ...(distRow ? [distRow] : [])];
+                    })}
 
                     {/* Add stop — dashed card style */}
                     <button onClick={() => setEditingStop({ dayId: day.id, stop: null })}
