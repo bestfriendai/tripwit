@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Plane, BedDouble, Car, ClipboardList, type LucideIcon } from "lucide-react";
+import { X, Plane, BedDouble, Car, ClipboardList, Sparkles, Loader2, Check, type LucideIcon } from "lucide-react";
 import type { Booking, BookingType } from "@/lib/types";
 import { newId } from "@/lib/types";
 import { cn } from "@/components/ui/cn";
+import { useGeminiNano } from "@/hooks/useGeminiNano";
 
 interface BookingDialogProps {
   booking?: Booking | null;
@@ -41,11 +42,36 @@ const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
   />
 );
 
+type ParseState = "idle" | "parsing" | "done" | "error";
+
 export default function BookingDialog({ booking, onSave, onClose }: BookingDialogProps) {
   const [form, setForm] = useState<Booking>(() => booking ?? emptyBooking());
 
+  // AI email parser
+  const { available, parseBookingEmail } = useGeminiNano();
+  const [showEmailParse, setShowEmailParse] = useState(false);
+  const [emailText, setEmailText] = useState("");
+  const [parseState, setParseState] = useState<ParseState>("idle");
+
   function set<K extends keyof Booking>(key: K, value: Booking[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function handleParse() {
+    if (!emailText.trim() || parseState === "parsing") return;
+    setParseState("parsing");
+    try {
+      const parsed = await parseBookingEmail(emailText);
+      setForm((f) => ({ ...f, ...parsed }));
+      setParseState("done");
+      setTimeout(() => {
+        setShowEmailParse(false);
+        setEmailText("");
+        setParseState("idle");
+      }, 1400);
+    } catch {
+      setParseState("error");
+    }
   }
 
   useEffect(() => {
@@ -81,6 +107,64 @@ export default function BookingDialog({ booking, onSave, onClose }: BookingDialo
 
         <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
           <div className="px-6 py-5 space-y-5">
+
+            {/* AI email parser — Chrome Gemini Nano only */}
+            {available && (
+              <div>
+                {!showEmailParse ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailParse(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-violet-600 border border-violet-200 bg-violet-50 hover:bg-violet-100 hover:border-violet-300 transition-colors"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Parse from email
+                  </button>
+                ) : (
+                  <div className="rounded-xl border border-violet-200 bg-violet-50/60 p-3.5 space-y-2.5">
+                    <p className="text-[11px] font-semibold text-violet-700 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      Paste your confirmation email
+                    </p>
+                    <textarea
+                      value={emailText}
+                      onChange={(e) => { setEmailText(e.target.value); if (parseState === "error") setParseState("idle"); }}
+                      rows={5}
+                      placeholder="Paste your flight or hotel confirmation email here…"
+                      className="w-full bg-white border border-violet-200 rounded-lg px-3 py-2 text-xs text-slate-700 placeholder-slate-400 resize-none focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all"
+                    />
+                    {parseState === "error" && (
+                      <p className="text-[11px] text-red-500">Couldn&apos;t parse that email — fill in the fields manually.</p>
+                    )}
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { setShowEmailParse(false); setEmailText(""); setParseState("idle"); }}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-white transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleParse}
+                        disabled={!emailText.trim() || parseState === "parsing" || parseState === "done"}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                          parseState === "done"
+                            ? "bg-emerald-500 text-white"
+                            : "bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        )}
+                      >
+                        {parseState === "parsing" && <Loader2 className="w-3 h-3 animate-spin" />}
+                        {parseState === "done" && <Check className="w-3 h-3" />}
+                        {parseState === "done" ? "Filled!" : parseState === "parsing" ? "Parsing…" : "Extract"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Type selector */}
             <div>
               <Label>Type</Label>
