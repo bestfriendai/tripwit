@@ -45,6 +45,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <head>
+        {/* Chrome Origin Trial: Prompt API for Gemini Nano (expires 2026-04-14) */}
+        <meta httpEquiv="origin-trial" content="A4b3/xwI3jHH7ZaxUYbEeLpkRGh+BYt9r6m15JOsWWM+Z1U5l0Ekdc0p12h8CFaloaJG6L4/UZZH67MLPfgdRgsAAACKeyJvcmlnaW4iOiJodHRwczovL3d3dy50cmlwd2l0LmFwcDo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3ODE1NjgwMDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9" />
         {adsenseClientId && (
           <Script
             async
